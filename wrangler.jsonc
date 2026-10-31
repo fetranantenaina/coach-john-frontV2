@@ -1,0 +1,8 @@
+{
+  "name": "coach-john-frontv2",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": "./dist/coach-john/browser",
+    "not_found_handling": "single-page-application"
+  }
+}
