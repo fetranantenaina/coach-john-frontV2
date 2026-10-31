@@ -1,0 +1,10 @@
+<main>
+  <input placeholder="Rechercher un client…" [(ngModel)]="q" style="margin-bottom:12px">
+  @for (u of filtres(); track u.id) {
+    <div class="row"><span style="display:flex;gap:10px;align-items:center"><span class="avatar">{{ u.name[0] }}</span><span><b>{{ u.name }}</b><br><span class="muted">{{ u.email }}</span></span></span>
+      <button class="sec" (click)="gerer(u)">Gérer</button></div>
+  } @empty { <p class="muted">Aucun client trouvé.</p> }
+  <details class="card" style="margin-top:14px" [open]="!list.length"><summary>Créer un compte client</summary>
+    <div class="grid"><div><label>Nom d'utilisateur</label><input [(ngModel)]="f.name"></div><div><label>Email</label><input type="email" [(ngModel)]="f.email"></div><div><label>Mot de passe</label><input type="password" [(ngModel)]="f.mdp"></div></div>
+    <button (click)="creer()">Créer le client</button></details>
+</main>

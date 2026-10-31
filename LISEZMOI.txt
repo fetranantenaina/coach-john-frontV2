@@ -1,0 +1,22 @@
+COACH JOHN : FRONTEND (Angular, PWA)
+====================================
+Backend utilisé en production : https://coach-john-backend-2.onrender.com   (réglé dans scripts/config.mjs)
+
+DÉVELOPPEMENT
+  npm install  &&  npm start    -> https://localhost:4200
+  (proxy /api et /socket.io vers http://localhost:3000 : le backend local doit tourner ; HTTPS reconnu avec mkcert : winget install FiloSottile.mkcert)
+
+DÉPLOIEMENT SUR CLOUDFLARE PAGES (Git)
+  Build command           : npm run build
+  Build output directory  : dist/coach-john/browser
+  Root directory          : (vide) si ce dossier est la racine du dépôt, sinon "frontend"
+  Aucune variable obligatoire : l'adresse du backend est déjà dans le build.
+  (Facultatif) API_URL = autre adresse de backend, sans slash final, pour la changer sans modifier le code.
+
+  ENSUITE, sur Render (backend > Environment) :  CORS_ORIGIN = adresse du site Cloudflare (ex. https://coach-john-front.pages.dev)
+  puis redéploie le backend. Sans cela, le navigateur bloque les appels du site vers l'API.
+
+DÉPLOIEMENT DIRECT (sans Git), PowerShell :
+  npm install
+  npm run build
+  npx wrangler pages deploy dist/coach-john/browser --project-name coach-john-front

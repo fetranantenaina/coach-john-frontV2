@@ -1,0 +1,9 @@
+<main>
+  <div class="card"><h2>Choisis un client</h2>
+    <p class="muted">Sélectionne le client dont tu veux consulter ou modifier les données.</p>
+    @if (clients.length) {
+      <select [(ngModel)]="id">@for (c of clients; track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }</select>
+      <button (click)="choisir()">Gérer ce client</button>
+    } @else { <p class="muted">Aucun client pour le moment. <a routerLink="/clients" style="color:var(--kaki-cl)">Crée un compte client</a>.</p> }
+  </div>
+</main>

@@ -1,0 +1,15 @@
+<main>
+  @if (api.isAdmin) {
+    <details class="card"><summary>Ajouter un terme</summary>
+      <div class="grid"><div><label>Terme</label><input [(ngModel)]="nt.terme"></div><div><label>Catégorie</label><input [(ngModel)]="nt.categorie"></div></div>
+      <label>Définition</label><textarea rows="2" [(ngModel)]="nt.definition"></textarea><button (click)="ajouter()">Ajouter</button></details> }
+  <div class="card"><h2>Glossaire</h2><input placeholder="Rechercher un terme…" [(ngModel)]="q" (ngModelChange)="chercher()">
+    @if (t) {
+      <button class="sec" style="margin-top:12px" (click)="t = null">← Résultats</button>
+      <h3 style="margin-top:12px">{{ t.terme }} <span class="pill">{{ t.categorie }}</span></h3><p>{{ t.definition }}</p>
+      @if (api.isAdmin) { <button class="sec" (click)="supprimer()">Supprimer ce terme</button> }
+      @if (t.termes_lies.length) { <p class="muted">Voir aussi : @for (x of t.termes_lies; track x.id) { <button class="lien" (click)="fiche(x.id)">{{ x.terme }}</button> · }</p> }
+    } @else {
+      @for (x of list; track x.id) { <div class="row"><span><b>{{ x.terme }}</b> <span class="pill">{{ x.categorie }}</span></span><button class="sec" (click)="fiche(x.id)">Fiche</button></div> }
+      @empty { <p class="muted">Aucun résultat.</p> }
+    }</div></main>

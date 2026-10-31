@@ -1,0 +1,34 @@
+<main>
+  <div class="stats">
+    <div class="stat"><small>Âge</small><b>{{ info?.age ?? '–' }}</b></div>
+    <div class="stat"><small>Sexe</small><b style="font-size:1.05rem">{{ info?.sexe || '–' }}</b></div>
+    <div class="stat"><small>PAL</small><b>{{ info?.pal ?? '–' }}</b></div>
+    <div class="stat"><small>Poids</small><b>{{ dernier?.poids_kg ?? '–' }} <em>kg</em></b></div>
+    <div class="stat"><small>Taille</small><b>{{ dernier?.taille_cm ?? '–' }} <em>cm</em></b></div>
+    <div class="stat"><small>IMC</small><b>{{ dernier?.imc ?? '–' }}</b></div>
+    <div class="stat"><small>Masse grasse</small><b>{{ dernier?.taux_graisse ?? '–' }} <em>%</em></b></div>
+    <div class="stat"><small>BMR</small><b>{{ reco?.metabolisme_base_kcal ?? '–' }} <em>kcal</em></b></div>
+    <div class="stat"><small>PAL (kcal)</small><b>{{ reco?.calories_maintien ?? '–' }} <em>kcal</em></b></div>
+  </div>
+  @if (info?.objectif) { <div class="card"><h2>Objectif</h2><p>{{ info.objectif }}</p></div> }
+  @if (info?.pal_recommandation; as r) { <div class="card"><h2>Niveau d'activité</h2><span class="pill">{{ r.categorie }}</span><p class="muted">{{ r.description }} {{ r.recommandation }}</p></div> }
+  @if (info?.statut_sante) { <div class="card"><h2>Statut de santé</h2><p>⚠️ {{ info.statut_sante }}</p></div> }
+  <div class="card"><h2>Mensurations @if (dernier) { <span class="muted">· {{ d10(dernier.date_releve) }}</span> }</h2>
+    <div class="stats">@for (c of mens; track c[0]) { <div class="stat"><small>{{ c[1] }}</small><b>{{ (dernier ? dernier[c[0]] : null) ?? '–' }} <em>cm</em></b></div> }</div></div>
+  <div class="card"><h2>Évolution physique</h2>
+    @if (hist.dates?.length) { <h3>Poids (kg)</h3><app-bars [vals]="hist.poids_kg" [labs]="labs()" /><h3>IMC</h3><app-bars [vals]="hist.imc" [labs]="labs()" /> }
+    @else { <p class="muted">Aucun relevé pour le moment.</p> }</div>
+  @if (api.isAdmin) {
+    <details class="card"><summary>Modifier le profil</summary>
+      <div class="grid">
+        <div><label>Sexe</label><select [(ngModel)]="p.sexe"><option value="">—</option><option>homme</option><option>femme</option><option>autre</option></select></div>
+        <div><label>Date de naissance</label><input type="date" [(ngModel)]="p.date_naissance"></div>
+        <div><label>PAL (1.2 – 2.4)</label><input type="number" step="0.01" [(ngModel)]="p.pal"></div></div>
+      <label>Objectif</label><input [(ngModel)]="p.objectif">
+      <label>Statut de santé (restrictions, alertes)</label><textarea rows="2" [(ngModel)]="p.statut_sante"></textarea>
+      <button (click)="saveProfil()">Enregistrer</button></details>
+    <details class="card"><summary>Nouveau relevé</summary>
+      <div class="grid">@for (c of champs; track c[0]) { <div><label>{{ c[1] }}</label><input type="number" step="any" [(ngModel)]="r[c[0]]"></div> }</div>
+      <button (click)="saveReleve()">Ajouter le relevé</button></details>
+  }
+</main>

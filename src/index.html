@@ -1,0 +1,20 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Coach John</title><base href="/">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0e0c"><meta name="description" content="Suivi sportif, nutritionnel et anatomique">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Coach John"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="config.js"></script>
+<link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>
+document.documentElement.dataset.theme=localStorage.getItem('theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+// Capte l'invitation d'installation avant le démarrage d'Angular
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();window.__bip=e;dispatchEvent(new Event('bip-ready'))});
+</script>
+<style>
+#splash{position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .5s}
+#splash.out{opacity:0;pointer-events:none}
+#splash .m{width:84px;height:140px;background:currentColor;-webkit-mask:url(logo.png) center/contain no-repeat;mask:url(logo.png) center/contain no-repeat;animation:pop .9s ease-out both}
+#splash p{margin:0;font:800 1.05rem system-ui,sans-serif;letter-spacing:.32em;animation:pop .9s .15s ease-out both}#splash b{color:#8f8f5e}
+html[data-theme=dark] #splash{background:#0e0e0c;color:#f3f1e7}html[data-theme=light] #splash{background:#f6f4ec;color:#14140f}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+</style></head>
+<body><div id="splash"><div class="m"></div><p>COACH <b>JOHN</b></p></div><app-root></app-root></body></html>

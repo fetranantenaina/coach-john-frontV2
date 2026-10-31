@@ -1,0 +1,37 @@
+<main>
+  @if (!s) {
+    @if (api.isAdmin) {
+    <details class="card"><summary>Nouvel exercice (référentiel)</summary>
+      <div class="grid"><div><label>Nom</label><input [(ngModel)]="nx.nom"></div><div><label>Groupe musculaire</label><input [(ngModel)]="nx.groupe_musculaire"></div><div><label>Méthode</label><input [(ngModel)]="nx.methode"></div></div>
+      <button (click)="creerExo()">Ajouter au référentiel</button></details>
+    <details class="card"><summary>Nouvelle séance</summary>
+      <div class="grid"><div><label>Session</label><input [(ngModel)]="ns.nom_session"></div><div><label>Cible</label><input [(ngModel)]="ns.cible"></div><div><label>Date</label><input type="date" [(ngModel)]="ns.date_seance"></div></div>
+      <label>Notes</label><input [(ngModel)]="ns.notes"><button (click)="creer()">Créer</button></details> }
+    <div class="card"><h2>Mes séances</h2>
+      @for (x of list; track x.id) { <div class="row"><span><b>{{ x.nom_session || 'Séance' }}</b> <span class="muted">{{ d10(x.date_seance) }} · {{ x.cible }}</span></span><button class="sec" (click)="ouvrir(x.id)">Ouvrir</button></div> }
+      @empty { <p class="muted">Aucune séance.</p> }</div>
+    <div class="card"><h2>Vue anatomique — muscles sollicités</h2>
+      @if (anat.length) { <app-hbars [rows]="anatRows()" /> } @else { <p class="muted">Ajoute des exercices à tes séances.</p> }</div>
+    <div class="card"><h2>Indicateurs athlétiques</h2>
+      @if (api.isAdmin) { <div class="grid">@for (k of ['force', 'endurance', 'resistance', 'puissance']; track k) { <div><label>{{ k }}</label><input type="number" [(ngModel)]="ni[k]"></div> }</div>
+      <button (click)="saveInd()">Enregistrer</button> }
+      @if (ind.dates?.length) { <app-hbars [rows]="indRows()" /> }</div>
+  } @else {
+    <button class="sec" (click)="s = null; load()">← Retour</button>
+    <div class="card" style="margin-top:12px"><h2>{{ s.nom_session || 'Séance' }} <span class="muted">{{ d10(s.date_seance) }}</span></h2><p class="muted">{{ s.cible }} {{ s.notes }}</p>
+      @for (e of s.exercices; track e.id) {
+        <div class="row"><label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--blanc);font-size:.95rem">
+          <input type="checkbox" style="width:auto" [checked]="e.fait" [disabled]="!api.isAdmin" (change)="fait(e, $any($event.target).checked)">
+          <span><b>{{ e.exercice_nom }}</b> @if (e.methode) { <span class="pill">{{ e.methode }}</span> }
+            <br><span class="muted">@if (e.series) { {{ e.series }} séries × {{ e.rep_temps || '–' }} } @else { {{ e.rep_temps || '' }} }@if (e.charge) { · {{ e.charge }} }@if (e.repos_secondes) { · repos {{ e.repos_secondes }}s }</span>
+            @if (e.cibles) { <br><span class="muted">Cible : {{ e.cibles }}</span> }
+            @if (e.infos) { <br><span class="muted">Note : {{ e.infos }}</span> }</span></label>
+          @if (api.isAdmin) { <button class="lien err" (click)="retirer(e.id)">✕</button> }</div>
+      } @empty { <p class="muted">Aucun exercice.</p> }</div>
+    @if (api.isAdmin) {
+    <details class="card" open><summary>Ajouter un exercice</summary>
+      <label>Exercice</label><select [(ngModel)]="ne.exercice_id">@for (x of exos; track x.id) { <option [ngValue]="x.id">{{ x.nom }} ({{ x.groupe_musculaire }})</option> }</select>
+      <div class="grid">@for (c of cs; track c[0]) { <div><label>{{ c[1] }}</label><input [type]="c[0] == 'series' || c[0] == 'repos_secondes' ? 'number' : 'text'" [(ngModel)]="ne[c[0]]"></div> }</div>
+      <button (click)="ajouter()">Ajouter</button>
+      @if (!exos.length) { <p class="muted">Référentiel vide : un coach/admin doit créer des exercices.</p> }</details> }
+  }</main>

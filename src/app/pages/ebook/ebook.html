@@ -1,0 +1,16 @@
+<main>
+  @if (c) {
+    <button class="sec" (click)="c = null; load()">← Sommaire</button>
+    <div class="card" style="margin-top:12px"><h2>{{ c.titre }}</h2>
+      @if (c.image_url) { <img [src]="c.image_url" style="max-width:100%;border-radius:10px"> }
+      <div style="white-space:pre-wrap">{{ c.contenu }}</div>
+      <button (click)="lu()">{{ c.lu ? '✓ Lu — marquer non lu' : 'Marquer comme lu' }}</button></div>
+  } @else {
+    <div class="card"><h2>E-book — {{ pr?.pourcentage ?? 0 }}% lu</h2><div class="hb"><u><i [style.width.%]="pr?.pourcentage ?? 0"></i></u></div>
+      @for (x of list; track x.id) { <div class="row"><span>{{ x.ordre }}. {{ x.titre }} @if (x.lu) { <span class="pill">lu</span> }</span><button class="sec" (click)="lire(x.id)">Lire</button></div> }
+      @empty { <p class="muted">Aucun chapitre importé.</p> }</div>
+  }@if (api.isAdmin && !c) {
+    <details class="card"><summary>Ajouter un chapitre</summary>
+      <div class="grid"><div><label>Titre</label><input [(ngModel)]="nc.titre"></div><div><label>Ordre</label><input type="number" [(ngModel)]="nc.ordre"></div></div>
+      <label>Contenu</label><textarea rows="5" [(ngModel)]="nc.contenu"></textarea><button (click)="ajouterChap()">Ajouter</button></details> }
+  </main>

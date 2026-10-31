@@ -1,0 +1,33 @@
+<main>
+  @if (b?.apports; as a) {
+    <div class="stats">
+      <div class="stat"><small>Calories</small><b>{{ a.calories | number: '1.0-0' }} <em>kcal</em></b></div>
+      <div class="stat"><small>Protéines</small><b>{{ a.proteines_g | number: '1.0-0' }} <em>g</em></b></div>
+      <div class="stat"><small>Glucides</small><b>{{ a.glucides_g | number: '1.0-0' }} <em>g</em></b></div>
+      <div class="stat"><small>Lipides</small><b>{{ a.lipides_g | number: '1.0-0' }} <em>g</em></b></div>
+      <div class="stat"><small>Eau</small><b>{{ a.eau_ml | number: '1.0-0' }} <em>ml</em></b></div>
+    </div>
+  }
+  @if (b?.recommandations; as r) {
+    <div class="card"><h2>Objectifs du jour</h2><app-hbars [rows]="rows()" />
+      <p class="muted">Maintien {{ r.calories_maintien }} kcal · perte {{ r.objectifs.perte_poids_kcal }} · prise {{ r.objectifs.prise_masse_kcal }} kcal @if (r.statut_sante) { · ⚠️ {{ r.statut_sante }} }</p></div>
+  } @else if (b) { <div class="card"><p class="muted">Pour les recommandations, il manque : {{ b.manquants?.join(', ') }}.</p></div> }
+  <div class="card"><h2>Guide alimentaire</h2><p class="muted">P = protéines · G = glucides · L = lipides (en g, pour 100 g)</p>
+    <input placeholder="Rechercher un aliment…" [(ngModel)]="q"></div>
+  @for (c of filtre(); track c.id) {
+    <div class="card"><h2>{{ c.nom }}</h2>
+      @for (a of c.aliments; track a.id) {
+        <div class="row"><b>{{ a.nom }}</b><span class="muted">P {{ a.proteines_g ?? '–' }} · G {{ a.glucides_g ?? '–' }} · L {{ a.lipides_g ?? '–' }}
+          @if (api.isAdmin) { <button class="lien err" style="margin-left:8px" (click)="supprimerAliment(a.id)">✕</button> }</span></div>
+      }</div>
+  }
+  @if (api.isAdmin) {
+    <details class="card"><summary>Ajouter un aliment au guide</summary>
+      <div class="grid"><div><label>Catégorie</label><input [(ngModel)]="na.categorie"></div><div><label>Aliment</label><input [(ngModel)]="na.nom"></div>
+        <div><label>Protéines (g)</label><input type="number" [(ngModel)]="na.proteines_g"></div><div><label>Glucides (g)</label><input type="number" [(ngModel)]="na.glucides_g"></div><div><label>Lipides (g)</label><input type="number" [(ngModel)]="na.lipides_g"></div></div>
+      <button (click)="ajouterAliment()">Ajouter</button></details>
+    <details class="card"><summary>Ajouter un apport</summary>
+      <div class="grid">@for (c of cs; track c[0]) { <div><label>{{ c[1] }}</label><input type="number" [(ngModel)]="f[c[0]]"></div> }</div>
+      <label>Repas / notes</label><input [(ngModel)]="f.notes"><button (click)="add()">Ajouter</button></details>
+  }
+</main>

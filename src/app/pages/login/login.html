@@ -1,0 +1,7 @@
+<div class="auth"><div class="logo-mark big"></div><h1>COACH <b>JOHN</b></h1><div class="card">
+    <label>Nom d'utilisateur</label><input [(ngModel)]="f.name">
+    <label>Mot de passe</label><input type="password" [(ngModel)]="f.mdp" (keyup.enter)="go()">
+    @if (err) { <p class="err">{{ err }}</p> }
+    <button style="width:100%" (click)="go()">Se connecter</button>
+    <p class="muted" style="text-align:center">Les comptes sont créés par ton coach.</p>
+  </div></div>

@@ -1,0 +1,14 @@
+<main>
+  @if (!cur) {
+    @if (me.role === 'user') { <div class="card"><h2>Écrire au coach / support</h2>
+      <select [(ngModel)]="coachId">@for (c of coachs; track c.id) { <option [ngValue]="c.id">{{ c.name }} ({{ c.role }})</option> }</select><button (click)="demarrer()">Démarrer</button></div> }
+    @if (me.role === 'admin') { <div class="card"><h2>Écrire à un client</h2>
+      <select [(ngModel)]="coachId">@for (c of clients; track c.id) { <option [ngValue]="c.id">{{ c.name }}</option> }</select><button (click)="demarrer()">Démarrer</button></div> }
+    <div class="card"><h2>Conversations</h2>
+      @for (c of convs; track c.id) { <div class="row"><span><b>{{ c.interlocuteur_nom }}</b> @if (c.non_lus) { <span class="pill">{{ c.non_lus }}</span> }<br><span class="muted">{{ c.dernier_message || 'Nouvelle conversation' }}</span></span><button class="sec" (click)="ouvrir(c.id)">Ouvrir</button></div> }
+      @empty { <p class="muted">Aucune conversation.</p> }</div>
+  } @else {
+    <button class="sec" (click)="cur = 0; load()">← Conversations</button>
+    <div class="card" style="margin-top:12px"><div class="chat" id="msgs">@for (m of msgs; track m.id) { <div class="msg" [class.moi]="m.expediteur_id === me.id">{{ m.contenu }}</div> }</div>
+      <div style="display:flex;gap:8px"><input placeholder="Votre message…" [(ngModel)]="txt" (keyup.enter)="envoyer()"><button style="margin:0" (click)="envoyer()">Envoyer</button></div></div>
+  }</main>
