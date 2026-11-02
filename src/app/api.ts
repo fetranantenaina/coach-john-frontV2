@@ -68,6 +68,7 @@ export class Api {
     this.reveilEchec = false;
     const debut = Date.now();
     const alerte = setTimeout(() => (this.reveilEnCours = true), 3500);
+    const alerte = setTimeout(() => (this.reveilEnCours = true), 1200); // le loader prend le relais de l'écran de lancement
     try {
       while (Date.now() - debut < 100000) {
         try {
