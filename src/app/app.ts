@@ -3,11 +3,14 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { Api } from './api';
 import { Icon } from './shared';
 import { Outils } from './outils';
+import { Chargement } from './chargement';
 import { ChoixClient } from './pages/choix-client/choix-client';
 
 @Component({
-  selector: 'app-root', standalone: true, imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, ChoixClient, Outils],
+  selector: 'app-root', standalone: true, imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, ChoixClient, Outils, Chargement],
   template: `
+  @if (api.pending > 0) { <div class="barre-chargement"></div> }
+  @if (api.serveurLent) { <app-chargement /> }
   @if (api.toastMsg) { <div class="toast">{{ api.toastMsg }}</div> }
   @if (!api.token) { <div style="position:fixed;top:12px;right:12px;z-index:6;display:flex;gap:8px"><app-outils /></div> }
   @if (api.token) {
@@ -36,5 +39,5 @@ export class App {
   changer(id: any) { const u = this.api.clients.find(c => c.id == id); if (u) this.api.setCible({ id: u.id, name: u.name }); }
   /** Admin sans client sélectionné sur une page de données : on propose de choisir un client. */
   needsClient() { return this.api.isAdmin && !this.api.cible && /^\/(profil|seances|nutrition)/.test(this.router.url); }
-  constructor() { this.api.connect(); }
+  constructor() { this.api.connect(); this.api.reveil(); }
 }

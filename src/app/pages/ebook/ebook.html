@@ -8,7 +8,7 @@
   } @else {
     <div class="card"><h2>E-book — {{ pr?.pourcentage ?? 0 }}% lu</h2><div class="hb"><u><i [style.width.%]="pr?.pourcentage ?? 0"></i></u></div>
       @for (x of list; track x.id) { <div class="row"><span>{{ x.ordre }}. {{ x.titre }} @if (x.lu) { <span class="pill">lu</span> }</span><button class="sec" (click)="lire(x.id)">Lire</button></div> }
-      @empty { <p class="muted">Aucun chapitre importé.</p> }</div>
+      @empty { @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted">Aucun chapitre importé.</p> } }</div>
   }@if (api.isAdmin && !c) {
     <details class="card"><summary>Ajouter un chapitre</summary>
       <div class="grid"><div><label>Titre</label><input [(ngModel)]="nc.titre"></div><div><label>Ordre</label><input type="number" [(ngModel)]="nc.ordre"></div></div>

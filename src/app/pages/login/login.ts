@@ -4,12 +4,13 @@ import { Api } from '../../api';
 
 @Component({ selector: 'app-login', standalone: true, imports: [FormsModule], templateUrl: './login.html' })
 export class Login {
-  f: any = {}; err = '';
+  f: any = {}; err = ''; charge = false;
   constructor(public api: Api) {}
   async go() {
     this.err = '';
     try {
+      this.charge = true;
       await this.api.login(this.f.name, this.f.mdp);
-    } catch (e: any) { this.err = e.message; }
+    } catch (e: any) { this.err = e.message; } finally { this.charge = false; }
   }
 }

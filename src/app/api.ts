@@ -25,13 +25,64 @@ export class Api {
 
   me(): any { try { return JSON.parse(atob(this.token!.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch { return null; } }
 
+  // --- Attente du serveur (l'hébergement gratuit s'endort : le réveil peut durer jusqu'à ~1 minute) ---
+  pending = 0;          // requêtes en cours (barre de progression)
+  lentes = 0;           // requêtes en cours depuis plus de 3,5 s (écran « connexion au serveur »)
+  tentative = 0;        // numéro de la tentative affiché pendant les nouvelles tentatives
+  reveilEnCours = false;
+  reveilEchec = false;
+  get serveurLent() { return this.lentes > 0 || this.reveilEnCours; }
+
+  /** Appel à l'API. Les lectures (GET) et la connexion sont retentées si le serveur n'est pas prêt (réseau coupé, 502/503/504). */
   async call<T = any>(m: string, p: string, b?: any): Promise<T> {
-    try { return await firstValueFrom(this.http.request<T>(m, BASE + '/api' + p, { body: b })); }
-    catch (e: any) {
-      if (this.token && (e.status === 401 || e.status === 403)) this.logout();
-      throw new Error(typeof e.error === 'string' && e.error ? e.error : e.error?.message || 'Erreur');
+    const reessayable = m === 'GET' || p === '/login';
+    this.pending++;
+    let lente = false;
+    const minuteur = setTimeout(() => { lente = true; this.lentes++; }, 3500);
+    try {
+      for (let essai = 1; ; essai++) {
+        try { return await firstValueFrom(this.http.request<T>(m, BASE + '/api' + p, { body: b })); }
+        catch (e: any) {
+          const indisponible = e.status === 0 || e.status === 502 || e.status === 503 || e.status === 504;
+          if (indisponible && reessayable && essai < 8) { this.tentative = essai + 1; await new Promise((r) => setTimeout(r, 4000)); continue; }
+          if (this.token && (e.status === 401 || e.status === 403)) this.logout();
+          throw new Error(this.messageErreur(e));
+        }
+      }
+    } finally {
+      clearTimeout(minuteur);
+      this.pending--;
+      if (lente) this.lentes--;
+      if (this.pending === 0) this.tentative = 0;
     }
   }
+
+  private messageErreur(e: any): string {
+    if (e.status === 0) return 'Impossible de joindre le serveur. Vérifie ta connexion Internet, puis réessaie.';
+    if (e.status === 502 || e.status === 503 || e.status === 504) return 'Le serveur est momentanément indisponible. Réessaie dans un instant.';
+    return typeof e.error === 'string' && e.error ? e.error : e.error?.message || 'Erreur';
+  }
+
+  /** Réveille le serveur au lancement : interroge /api/sante jusqu'à la réponse (100 s max). */
+  async reveil() {
+    this.reveilEchec = false;
+    const debut = Date.now();
+    const alerte = setTimeout(() => (this.reveilEnCours = true), 3500);
+    try {
+      while (Date.now() - debut < 100000) {
+        try {
+          const r = await fetch(BASE + '/api/sante', { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+          if (r.ok) return;
+        } catch { /* serveur pas encore prêt */ }
+        await new Promise((r) => setTimeout(r, 2500));
+      }
+      this.reveilEchec = true;
+    } finally {
+      clearTimeout(alerte);
+      this.reveilEnCours = this.reveilEchec; // reste affiché seulement pour proposer « Réessayer »
+    }
+  }
+
   get = <T = any>(p: string) => this.call<T>('GET', p);
   post = <T = any>(p: string, b?: any) => this.call<T>('POST', p, b);
   put = <T = any>(p: string, b?: any) => this.call<T>('PUT', p, b);

@@ -1,8 +1,11 @@
 {
+  // Nom du Worker : doit être IDENTIQUE au nom du projet dans Cloudflare (Workers & Pages)
   "name": "coach-john-frontv2",
   "compatibility_date": "2025-09-01",
   "assets": {
+    // Site Angular compilé par « npm run build »
     "directory": "./dist/coach-john/browser",
+    // Les liens directs (/profil, /chat...) renvoient index.html : l'app Angular gère ses routes
     "not_found_handling": "single-page-application"
   }
 }

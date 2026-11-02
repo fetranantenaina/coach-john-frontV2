@@ -11,5 +11,5 @@
       @if (t.termes_lies.length) { <p class="muted">Voir aussi : @for (x of t.termes_lies; track x.id) { <button class="lien" (click)="fiche(x.id)">{{ x.terme }}</button> · }</p> }
     } @else {
       @for (x of list; track x.id) { <div class="row"><span><b>{{ x.terme }}</b> <span class="pill">{{ x.categorie }}</span></span><button class="sec" (click)="fiche(x.id)">Fiche</button></div> }
-      @empty { <p class="muted">Aucun résultat.</p> }
+      @empty { @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted">Aucun résultat.</p> } }
     }</div></main>
