@@ -57,3 +57,26 @@ details.card>summary::before{content:'+ '}details.card[open]>summary::before{con
 @keyframes tourne{to{transform:rotate(360deg)}}
 .spin-ligne{display:flex;align-items:center;gap:10px;color:var(--gris);padding:8px 0}
 .spin-ligne .spinner{width:18px;height:18px;border-width:2px;margin:0}
+
+
+/* Mes séances : cartes compactes et adaptatives */
+.seances-section{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:14px;margin-bottom:14px}
+.seances-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.seances-heading h2{margin:0 0 3px}
+.seances-heading p{margin:0}
+.seances-count{flex:none;border:1px solid var(--bord);background:var(--item);color:var(--kaki-cl);border-radius:20px;padding:5px 10px;font-size:.75rem}
+.seances-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.seance-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;min-height:142px;margin:0;padding:12px;background:var(--item);border:1px solid var(--bord);border-radius:12px;color:var(--blanc);font:inherit;cursor:pointer;transition:border-color .18s,transform .18s,background .18s}
+.seance-card:hover{background:var(--bulle);border-color:var(--kaki);transform:translateY(-2px)}
+.seance-date{display:flex;align-items:center;gap:6px;color:var(--kaki-cl);font-size:.73rem;margin-bottom:12px}
+.seance-date-icon{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:7px;background:var(--olive);color:var(--clair);font-size:1rem}
+.seance-name{font-size:.95rem;line-height:1.3;margin-bottom:5px;overflow-wrap:anywhere}
+.seance-target{font-size:.78rem;color:var(--gris);overflow-wrap:anywhere}
+.seance-open{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:auto;padding-top:12px;color:var(--sable);font-size:.76rem;font-weight:650}
+.seance-open span{font-size:1rem}
+.seances-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 12px;color:var(--gris)}
+.seances-empty>span{font-size:1.8rem;color:var(--kaki);margin-bottom:8px}
+.seances-empty b{color:var(--blanc);font-size:.9rem}
+.seances-empty p{font-size:.8rem;margin:4px 0 0}
+@media(min-width:600px){.seances-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:360px){.seances-grid{grid-template-columns:1fr}.seance-card{min-height:125px}}

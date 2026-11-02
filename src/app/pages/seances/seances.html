@@ -7,9 +7,22 @@
     <details class="card"><summary>Nouvelle séance</summary>
       <div class="grid"><div><label>Session</label><input [(ngModel)]="ns.nom_session"></div><div><label>Cible</label><input [(ngModel)]="ns.cible"></div><div><label>Date</label><input type="date" [(ngModel)]="ns.date_seance"></div></div>
       <label>Notes</label><input [(ngModel)]="ns.notes"><button (click)="creer()">Créer</button></details> }
-    <div class="card"><h2>Mes séances</h2>
-      @for (x of list; track x.id) { <div class="row"><span><b>{{ x.nom_session || 'Séance' }}</b> <span class="muted">{{ d10(x.date_seance) }} · {{ x.cible }}</span></span><button class="sec" (click)="ouvrir(x.id)">Ouvrir</button></div> }
-      @empty { @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted">Aucune séance.</p> } }</div>
+    <section class="seances-section">
+      <div class="seances-heading"><div><h2>Mes séances</h2><p class="muted">Retrouve et consulte tes entraînements</p></div><span class="seances-count">{{ list.length }} séance{{ list.length > 1 ? 's' : '' }}</span></div>
+      <div class="seances-grid">
+        @for (x of list; track x.id) {
+          <button type="button" class="seance-card" (click)="ouvrir(x.id)">
+            <span class="seance-date"><span class="seance-date-icon">▦</span>{{ d10(x.date_seance) || 'Date à définir' }}</span>
+            <strong class="seance-name">{{ x.nom_session || 'Séance' }}</strong>
+            <span class="seance-target">{{ x.cible || 'Objectif non précisé' }}</span>
+            <span class="seance-open">Voir les détails <span aria-hidden="true">→</span></span>
+          </button>
+        } @empty {
+          @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> }
+          @else { <div class="seances-empty"><span>▦</span><b>Aucune séance pour le moment</b><p>Les séances que tu crées apparaîtront ici.</p></div> }
+        }
+      </div>
+    </section>
     <div class="card"><h2>Vue anatomique — muscles sollicités</h2>
       @if (anat.length) { <app-hbars [rows]="anatRows()" /> } @else { <p class="muted">Ajoute des exercices à tes séances.</p> }</div>
     <div class="card"><h2>Indicateurs athlétiques</h2>
