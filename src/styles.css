@@ -1,5 +1,15 @@
-:root,:root[data-theme=dark]{--noir:#0e0e0c;--carte:#1a1a16;--bord:#2e2e26;--kaki:#8f8f5e;--kaki-cl:#b9b88a;--olive:#5f6b32;--sable:#d2a94b;--blanc:#f3f1e7;--gris:#9a9a8c;--rouge:#c0553f;--champ:#0e0e0c;--item:#141411;--barre:#0a0a09;--bulle:#26261f;--clair:#f3f1e7;color-scheme:dark}
-:root[data-theme=light]{--noir:#f6f4ec;--carte:#ffffff;--bord:#dcd9cb;--kaki:#7a7a4c;--kaki-cl:#5b5b35;--olive:#5f6b32;--sable:#9a7618;--blanc:#14140f;--gris:#6b6b5e;--rouge:#b3412c;--champ:#faf9f3;--item:#f1efe4;--barre:#ffffff;--bulle:#e8e6d8;--clair:#f3f1e7;color-scheme:light}
+:root,:root[data-theme=light]{
+  --noir:#f5f3eb;--carte:#ffffff;--bord:#dedbcc;--kaki:#85845b;--kaki-cl:#62613f;
+  --olive:#77764b;--sable:#a77b12;--blanc:#171713;--gris:#77766b;--rouge:#b84b37;
+  --champ:#fbfaf6;--item:#f1efe4;--barre:#ffffff;--bulle:#e9e6d8;--clair:#f5f3eb;
+  color-scheme:light
+}
+:root[data-theme=dark]{
+  --noir:#171813;--carte:#22241d;--bord:#3b3d30;--kaki:#aaa77a;--kaki-cl:#d0cda0;
+  --olive:#77764b;--sable:#d0aa4f;--blanc:#f2f0e6;--gris:#aaa99b;--rouge:#d16a55;
+  --champ:#1b1d17;--item:#292b22;--barre:#20221b;--bulle:#303226;--clair:#f5f3eb;
+  color-scheme:dark
+}
 *{box-sizing:border-box}body{margin:0;background:var(--noir);color:var(--blanc);font:15px/1.45 system-ui,Segoe UI,Roboto,sans-serif;padding-bottom:76px}
 h2{font-size:1.15rem;color:var(--kaki-cl);margin:.2em 0 .5em}h3{font-size:1rem;margin:.4em 0}
 header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bord);background:var(--barre);position:sticky;top:0;z-index:5}
@@ -59,24 +69,29 @@ details.card>summary::before{content:'+ '}details.card[open]>summary::before{con
 .spin-ligne .spinner{width:18px;height:18px;border-width:2px;margin:0}
 
 
-/* Mes séances : cartes compactes et adaptatives */
-.seances-section{background:var(--carte);border:1px solid var(--bord);border-radius:14px;padding:14px;margin-bottom:14px}
-.seances-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
-.seances-heading h2{margin:0 0 3px}
-.seances-heading p{margin:0}
-.seances-count{flex:none;border:1px solid var(--bord);background:var(--item);color:var(--kaki-cl);border-radius:20px;padding:5px 10px;font-size:.75rem}
-.seances-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.seance-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;min-height:142px;margin:0;padding:12px;background:var(--item);border:1px solid var(--bord);border-radius:12px;color:var(--blanc);font:inherit;cursor:pointer;transition:border-color .18s,transform .18s,background .18s}
-.seance-card:hover{background:var(--bulle);border-color:var(--kaki);transform:translateY(-2px)}
-.seance-date{display:flex;align-items:center;gap:6px;color:var(--kaki-cl);font-size:.73rem;margin-bottom:12px}
-.seance-date-icon{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:7px;background:var(--olive);color:var(--clair);font-size:1rem}
-.seance-name{font-size:.95rem;line-height:1.3;margin-bottom:5px;overflow-wrap:anywhere}
-.seance-target{font-size:.78rem;color:var(--gris);overflow-wrap:anywhere}
-.seance-open{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:auto;padding-top:12px;color:var(--sable);font-size:.76rem;font-weight:650}
-.seance-open span{font-size:1rem}
-.seances-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px 12px;color:var(--gris)}
-.seances-empty>span{font-size:1.8rem;color:var(--kaki);margin-bottom:8px}
-.seances-empty b{color:var(--blanc);font-size:.9rem}
-.seances-empty p{font-size:.8rem;margin:4px 0 0}
-@media(min-width:600px){.seances-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:360px){.seances-grid{grid-template-columns:1fr}.seance-card{min-height:125px}}
+/* Identité visuelle Coach John — cartes, formulaires et navigation */
+body{background:var(--noir);color:var(--blanc)}
+header{box-shadow:0 1px 0 color-mix(in srgb,var(--bord) 70%,transparent)}
+.logo{color:var(--blanc)}
+.card{border-radius:18px;border-color:var(--bord);background:var(--carte)}
+input,select,textarea{border-radius:12px;min-height:42px}
+button{border-radius:12px}
+button.sec{border:1.5px solid var(--kaki);color:var(--kaki-cl);background:transparent}
+nav{box-shadow:0 -2px 12px color-mix(in srgb,var(--noir) 8%,transparent)}
+nav a{font-size:.76rem;padding:11px 2px 8px}
+nav a.on{color:var(--sable);box-shadow:inset 0 3px var(--sable)}
+.stat,.row{border-radius:15px}
+h2{color:var(--kaki-cl)}
+details.card>summary{color:var(--sable)}
+/* Liste des séances en petites cartes */
+.seances-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px}
+.seance-card{display:flex;flex-direction:column;gap:10px;background:var(--item);border:1px solid var(--bord);border-radius:17px;padding:15px;min-width:0}
+.seance-card__top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.seance-card__date{display:inline-flex;align-items:center;gap:6px;color:var(--kaki-cl);font-size:.8rem;font-weight:650}
+.seance-card__title{font-size:1rem;font-weight:750;overflow-wrap:anywhere}
+.seance-card__target{color:var(--gris);font-size:.85rem}
+.seance-card button{align-self:flex-end;margin-top:auto}
+.exercice-search-panel{padding:12px;background:var(--item);border:1px solid var(--bord);border-radius:14px;margin:10px 0}
+.exercice-search-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.exercice-match{font-size:.78rem;color:var(--gris);margin:8px 0 0}
+@media(max-width:420px){.seances-grid{grid-template-columns:1fr}.seance-card{padding:13px}}
