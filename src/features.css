@@ -1,0 +1,35 @@
+/* Séances : calendrier mensuel + petites cards */
+.cal-tete{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.cal-tete h2{margin:0;text-transform:capitalize}
+.cal-tete button{margin:0;padding:4px 14px;font-size:1.2rem;line-height:1.2}
+.cal-grille{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-sem{text-align:center;font-size:.7rem;color:var(--gris);padding:4px 0}
+.cal-jour{aspect-ratio:1;border-radius:10px;border:1px solid transparent;background:var(--item);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.85rem;cursor:pointer;user-select:none}
+.cal-jour.vide{background:none;cursor:default}
+.cal-jour.auj{border-color:var(--kaki)}
+.cal-jour.seance{background:color-mix(in srgb,var(--olive) 32%,var(--item))}
+.cal-jour.sel{background:var(--olive);color:var(--clair)}
+.cal-points{display:flex;gap:2px;height:5px}.cal-points i{width:5px;height:5px;border-radius:50%;background:var(--sable)}
+.mini-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.mini-seance{display:flex;gap:10px;align-items:center;background:var(--item);border:1px solid var(--bord);border-radius:12px;padding:10px;cursor:pointer}
+.mini-seance:hover,.cal-jour:not(.vide):hover{border-color:var(--kaki)}
+.mini-date{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:46px;height:50px;border-radius:10px;background:var(--olive);color:var(--clair)}
+.mini-date b{font-size:1.1rem;line-height:1}.mini-date small{font-size:.65rem;text-transform:uppercase}
+.mini-info{display:flex;flex-direction:column;min-width:0}.mini-info b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mini-info small{color:var(--gris)}
+
+/* Puces (filtres, facettes de recherche) */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:999px;border:1px solid var(--bord);background:var(--item);font-size:.8rem;cursor:pointer;user-select:none}
+.chip small{color:var(--gris)}.chip:hover{border-color:var(--kaki)}
+.chip.on{background:var(--olive);border-color:var(--olive);color:var(--clair)}.chip.on small{color:inherit;opacity:.8}
+.facette-titre{margin:12px 0 2px;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris)}
+.alerte{background:color-mix(in srgb,var(--sable) 16%,transparent);border:1px solid var(--sable);border-radius:10px;padding:8px 12px;font-size:.85rem;margin:10px 0 0}
+/* Courbes */
+.courbe svg{width:100%;height:auto;display:block;overflow:visible}
+.courbe .grille{stroke:var(--bord);stroke-width:1}
+.courbe .axe{fill:var(--gris);font-size:11px}
+.courbe .trait{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.courbe .pt{stroke:var(--carte);stroke-width:2}
+.courbe .bulle rect{fill:var(--barre);stroke:var(--bord)}.courbe .bulle text{fill:var(--blanc);font-size:11px}
+.legende{display:flex;flex-wrap:wrap;gap:10px;font-size:.78rem;color:var(--gris);margin-bottom:6px}.legende i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+.resume{margin:2px 0 6px}.resume b{font-size:1.5rem;color:var(--kaki-cl)}

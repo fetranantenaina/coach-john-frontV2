@@ -2,28 +2,61 @@
   @if (!s) {
     @if (api.isAdmin) {
     <details class="card"><summary>Nouvel exercice (référentiel)</summary>
-      <div class="grid"><div><label>Nom</label><input [(ngModel)]="nx.nom"></div><div><label>Groupe musculaire</label><input [(ngModel)]="nx.groupe_musculaire"></div><div><label>Méthode</label><input [(ngModel)]="nx.methode"></div></div>
-      <button (click)="creerExo()">Ajouter au référentiel</button></details>
+      <p class="muted" style="margin:0 0 6px">Tape dans un champ : les deux autres se filtrent et proposent les valeurs possibles.</p>
+      <div class="grid">
+        <div><label>Nom</label><input [(ngModel)]="nx.nom" placeholder="ex. dumbbell flat bench press"></div>
+        <div><label>Groupe musculaire</label><input [(ngModel)]="nx.groupe_musculaire" placeholder="ex. CHEST"></div>
+        <div><label>Méthode</label><input [(ngModel)]="nx.methode" placeholder="ex. STRAIGHT SET"></div>
+      </div>
+      @if (vue().existant; as ex) {
+        <p class="alerte">Cet exercice existe déjà dans le référentiel. Groupes : {{ ex.groupes.join(', ') || '–' }} · Méthodes : {{ ex.methodes.join(', ') || '–' }}</p>
+      }
+      <p class="facette-titre">Exercices ({{ vue().n }})</p>
+      <div class="chips">
+        @for (e of vue().exercices; track e.id) { <span class="chip" role="button" tabindex="0" (click)="choisirNom(e.nom)" (keyup.enter)="choisirNom(e.nom)">{{ e.nom }}</span> }
+        @if (vue().n > vue().exercices.length) { <span class="muted">+ {{ vue().n - vue().exercices.length }} autres : précise ta recherche</span> }
+        @if (!vue().n) { <span class="muted">Aucun exercice ne correspond : tu peux le créer.</span> }
+      </div>
+      <p class="facette-titre">Groupes musculaires</p>
+      <div class="chips">@for (g of vue().groupes; track g[0]) { <span class="chip" role="button" tabindex="0" [class.on]="norm(nx.groupe_musculaire) === norm(g[0])" (click)="choisirGroupe(g[0])" (keyup.enter)="choisirGroupe(g[0])">{{ g[0] }} <small>{{ g[1] }}</small></span> }</div>
+      <p class="facette-titre">Méthodes</p>
+      <div class="chips">@for (m of vue().methodes; track m[0]) { <span class="chip" role="button" tabindex="0" [class.on]="norm(nx.methode) === norm(m[0])" (click)="choisirMethode(m[0])" (keyup.enter)="choisirMethode(m[0])">{{ m[0] }} <small>{{ m[1] }}</small></span> }</div>
+      <button (click)="creerExo()" [disabled]="!nx.nom || !!vue().existant">Ajouter au référentiel</button></details>
     <details class="card"><summary>Nouvelle séance</summary>
       <div class="grid"><div><label>Session</label><input [(ngModel)]="ns.nom_session"></div><div><label>Cible</label><input [(ngModel)]="ns.cible"></div><div><label>Date</label><input type="date" [(ngModel)]="ns.date_seance"></div></div>
       <label>Notes</label><input [(ngModel)]="ns.notes"><button (click)="creer()">Créer</button></details> }
-    <section class="card"><h2>Mes séances</h2>
-      <div class="seances-grid">
-        @for (x of list; track x.id) {
-          <article class="seance-card">
-            <div class="seance-card__top">
-              <div><div class="seance-card__date">▣ {{ d10(x.date_seance) || 'Date non définie' }}</div>
-                <div class="seance-card__title">{{ x.nom_session || 'Séance' }}</div>
-                <div class="seance-card__target">{{ x.cible || 'Objectif non précisé' }}</div>
-              </div>
-              <span class="pill">{{ x.exercices?.length || 0 }} ex.</span>
-            </div>
-            <button class="sec" (click)="ouvrir(x.id)">Voir la séance →</button>
-          </article>
-        }
-        @empty { @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted">Aucune séance.</p> } }
+    <div class="card">
+      <div class="cal-tete">
+        <button class="sec" (click)="changerMois(-1)" aria-label="Mois précédent">‹</button>
+        <h2>{{ titreMois() }}</h2>
+        <button class="sec" (click)="changerMois(1)" aria-label="Mois suivant">›</button>
       </div>
-    </section>
+      <div class="cal-grille">
+        @for (j of semaine; track $index) { <div class="cal-sem">{{ j }}</div> }
+        @for (c of cases(); track $index) {
+          @if (c.date) {
+            <div class="cal-jour" role="button" tabindex="0" [class.seance]="c.nb" [class.sel]="c.date === jourSel" [class.auj]="c.auj"
+                 (click)="choisir(c.date)" (keyup.enter)="choisir(c.date)">{{ c.jour }}<span class="cal-points">@for (p of points(c.nb); track $index) { <i></i> }</span></div>
+          } @else { <div class="cal-jour vide"></div> }
+        }
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px">
+        <button class="lien" (click)="aujourdhui()">Aujourd'hui</button>
+        @if (jourSel) { <button class="lien" (click)="jourSel = null">Voir tout le mois</button> }
+      </div>
+    </div>
+    <div class="card"><h2>{{ jourSel ? 'Séances du ' + libelleJour(jourSel) : 'Séances du mois' }} <span class="muted">({{ listeAffichee().length }})</span></h2>
+      <div class="mini-grille">
+        @for (x of listeAffichee(); track x.id) {
+          <div class="mini-seance" role="button" tabindex="0" (click)="ouvrir(x.id)" (keyup.enter)="ouvrir(x.id)">
+            <span class="mini-date"><b>{{ jour(x.date_seance) }}</b><small>{{ moisCourt(x.date_seance) }}</small></span>
+            <span class="mini-info"><b>{{ x.nom_session || 'Séance' }}</b>@if (x.cible) { <small>{{ x.cible }}</small> }</span>
+          </div>
+        } @empty {
+          <div style="grid-column:1/-1">@if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted" style="margin:0">Aucune séance {{ jourSel ? 'ce jour' : 'ce mois-ci' }}.</p> }</div>
+        }
+      </div>
+    </div>
     <div class="card"><h2>Vue anatomique — muscles sollicités</h2>
       @if (anat.length) { <app-hbars [rows]="anatRows()" /> } @else { <p class="muted">Ajoute des exercices à tes séances.</p> }</div>
     <div class="card"><h2>Indicateurs athlétiques</h2>
@@ -44,40 +77,8 @@
       } @empty { @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted">Aucun exercice.</p> } }</div>
     @if (api.isAdmin) {
     <details class="card" open><summary>Ajouter un exercice</summary>
-      <div class="exercice-search-panel">
-        <p class="muted" style="margin:0 0 8px">Recherche croisée : chaque choix affine automatiquement les deux autres.</p>
-        <div class="exercice-search-grid">
-          <div><label>Rechercher par nom</label><input [(ngModel)]="rechercheExercice" (ngModelChange)="rechercherExerciceChange()" placeholder="Ex. développé couché"></div>
-          <div><label>Exercice correspondant</label>
-            <select [(ngModel)]="ne.exercice_id" (ngModelChange)="selectionnerExercice($event)">
-              <option [ngValue]="null">Tous les exercices</option>
-              @for (x of exercicesFiltres(); track x.id) { <option [ngValue]="x.id">{{ x.nom }}</option> }
-            </select>
-          </div>
-          <div><label>Groupe musculaire</label>
-            <select [(ngModel)]="filtreGroupe" (ngModelChange)="changerGroupe($event)">
-              <option value="">Tous les groupes</option>
-              @for (g of groupesDisponibles(); track g) { <option [value]="g">{{ g }}</option> }
-            </select>
-          </div>
-          <div><label>Méthode</label>
-            <select [(ngModel)]="filtreMethode" (ngModelChange)="changerMethode($event)">
-              <option value="">Toutes les méthodes</option>
-              @for (m of methodesDisponibles(); track m) { <option [value]="m">{{ m }}</option> }
-            </select>
-          </div>
-        </div>
-        <p class="exercice-match">{{ exercicesFiltres().length }} exercice(s) correspondant(s)
-          @if (exerciceSelectionne(); as ex) { · Groupe : {{ ex.groupe_musculaire || 'non renseigné' }} · Méthode : {{ ex.methode || 'non renseignée' }} }
-        </p>
-        @if (rechercheExercice && !ne.exercice_id) {
-          @for (x of exercicesFiltres().slice(0, 5); track x.id) {
-            <div class="row"><span><b>{{ x.nom }}</b><br><span class="muted">{{ x.groupe_musculaire }} · {{ x.methode || 'Méthode non définie' }}</span></span>
-              <button class="sec" (click)="selectionnerExercice(x.id)">Choisir</button></div>
-          }
-        }
-      </div>
+      <label>Exercice</label><select [(ngModel)]="ne.exercice_id">@for (x of exos; track x.id) { <option [ngValue]="x.id">{{ x.nom }} ({{ x.groupe_musculaire }})</option> }</select>
       <div class="grid">@for (c of cs; track c[0]) { <div><label>{{ c[1] }}</label><input [type]="c[0] == 'series' || c[0] == 'repos_secondes' ? 'number' : 'text'" [(ngModel)]="ne[c[0]]"></div> }</div>
-      <button (click)="ajouter()" [disabled]="!ne.exercice_id">Ajouter à la séance</button>
+      <button (click)="ajouter()">Ajouter</button>
       @if (!exos.length) { <p class="muted">Référentiel vide : un coach/admin doit créer des exercices.</p> }</details> }
   }</main>

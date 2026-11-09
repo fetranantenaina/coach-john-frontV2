@@ -16,8 +16,15 @@
   <div class="card"><h2>Mensurations @if (dernier) { <span class="muted">· {{ d10(dernier.date_releve) }}</span> }</h2>
     <div class="stats">@for (c of mens; track c[0]) { <div class="stat"><small>{{ c[1] }}</small><b>{{ (dernier ? dernier[c[0]] : null) ?? '–' }} <em>cm</em></b></div> }</div></div>
   <div class="card"><h2>Évolution physique</h2>
-    @if (hist.dates?.length) { <h3>Poids (kg)</h3><app-bars [vals]="hist.poids_kg" [labs]="labs()" /><h3>IMC</h3><app-bars [vals]="hist.imc" [labs]="labs()" /> }
-    @else { <p class="muted">Aucun relevé pour le moment.</p> }</div>
+    @if (groupes.length) {
+      <div class="chips">@for (g of groupes; track g.id) { <span class="chip" [class.on]="g.id === sel" (click)="sel = g.id">{{ g.titre }}</span> }</div>
+      @for (g of groupes; track g.id) {
+        @if (g.id === sel) {
+          @if (g.resume) { <p class="resume"><b>{{ g.resume.dernier }}</b> {{ g.unite }} <span class="muted">· {{ g.resume.variation > 0 ? '+' : '' }}{{ g.resume.variation }} {{ g.unite }} depuis le premier relevé</span></p> }
+          <app-courbe [dates]="hist.dates" [series]="g.series" [unite]="g.unite" />
+        }
+      }
+    } @else { <p class="muted">Aucun relevé pour le moment.</p> }</div>
   @if (api.isAdmin) {
     <details class="card"><summary>Modifier le profil</summary>
       <div class="grid">
