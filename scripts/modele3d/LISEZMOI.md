@@ -12,13 +12,17 @@ blender -b --factory-startup --python build_glb.py -- MuscularSystem100.fbx "Reg
 npx @gltf-transform/cli@4.1.1 optimize corps.brut.glb ../../public/modeles/corps.glb --compress meshopt --texture-compress false --simplify false --join false --flatten false --instance false --palette false
 ```
 
-4. Contrôle visuel : `blender -b --factory-startup --python render.py -- ../../public/modeles/corps.glb apercu`
+4. Retirer les parties génitales de la silhouette (à lancer depuis un dossier où `@gltf-transform/core@4.1.1`, `@gltf-transform/extensions@4.1.1` et `meshoptimizer@0.22.0` sont installés) :
+   `node retirer_genitaux.mjs ../../public/modeles/corps.glb ../../public/modeles/corps.glb compresse pubis`
+   (supprime les morceaux de peau du pénis, du scrotum et de la toison pubienne, repérés par leur position).
+
+5. Contrôle visuel : `blender -b --factory-startup --python render.py -- ../../public/modeles/corps.glb apercu`
    (produit `apercu_face.png`, `apercu_dos.png`, `apercu_cote.png`).
 
 Contenu du glb (1,2 Mo, environ 234 000 faces, corps de 1,75 m, pieds à y = 0) :
 - `<code>_g` / `<code>_d` : les 23 muscles Coach John, côté gauche / droit (code = `muscles.code` en base) ;
 - `contexte` : le reste de la musculature, non cliquable ;
-- `silhouette` : contour de la peau, à afficher en transparence.
+- `silhouette` : contour de la peau, à afficher en transparence (sans parties génitales).
 
 Le fichier est compressé avec meshopt : côté Three.js, `GLTFLoader.setMeshoptDecoder(MeshoptDecoder)`.
 La table `CARTE` de `build_glb.py` dit quels muscles Z-Anatomy composent chaque zone.
