@@ -1,10 +1,35 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Api } from '../../api';
+import { Router, RouterLink } from '@angular/router';
 import { HBars, d10 } from '../../shared';
+import { Corps3d, webglDisponible } from '../../anatomie/corps3d';
+import { NEUTRE, NOMS_ACTIVITES, RAMPES, themeSombre } from '../../anatomie/echelle';
 
-@Component({ selector: 'app-seances', standalone: true, imports: [FormsModule, HBars], templateUrl: './seances.html' })
+@Component({ selector: 'app-seances', standalone: true, imports: [FormsModule, HBars, RouterLink, Corps3d], templateUrl: './seances.html' })
 export class Seances {
+  // --- Fiche d'exercice : muscles travaillés en couleur (une seule visionneuse 3D ouverte à la fois) ---
+  router = inject(Router);
+  webgl = webglDisponible(); nomsActivites = NOMS_ACTIVITES; Math = Math;
+  exoOuvert: number | null = null; exoMuscles: any = null; refMuscles: any[] = [];
+  async voirMuscles(e: any) {
+    if (this.exoOuvert === e.id) { this.exoOuvert = null; return; }
+    this.exoOuvert = e.id; this.exoMuscles = null;
+    try {
+      const texte = e.cibles || e.groupe_musculaire || '';
+      const [r, ref] = await Promise.all([this.api.get('/anatomie/cibles?texte=' + encodeURIComponent(texte)),
+        this.refMuscles.length ? Promise.resolve(this.refMuscles) : this.api.get('/anatomie/muscles')]);
+      this.refMuscles = ref;
+      if (this.exoOuvert === e.id) this.exoMuscles = r;
+    } catch (x: any) { this.api.toast(x.message); this.exoOuvert = null; }
+  }
+  /** Muscle principal (100 %) foncé, secondaire (50 %) moyen, part d'un groupe (33 %) clair. */
+  couleursExo() {
+    const rampe = themeSombre() ? RAMPES.sombre : RAMPES.clair;
+    return Object.fromEntries((this.exoMuscles?.muscles || []).map((m: any) => [m.code, rampe[m.part >= 1 ? 4 : m.part >= 0.5 ? 2 : 0]]));
+  }
+  neutreExo() { return themeSombre() ? NEUTRE.sombre : NEUTRE.clair; }
+  ouvrirMuscle(code: string | null) { if (code) this.router.navigate(['/anatomie'], { queryParams: { muscle: code, periode: 'tout' } }); }
   list: any[] = []; anat: any[] = []; ind: any = {}; exos: any[] = []; s: any = null;
   ns: any = {}; ni: any = {}; ne: any = {}; d10 = d10;
   cs = [['series', 'Séries'], ['rep_temps', 'Répétitions / temps (15, 20sec, 15mn)'], ['charge', 'Charge / niveau / vitesse (4kg, Lvl 2…)'], ['repos_secondes', 'Repos (s)'], ['cibles', 'Muscles ciblés (ex. CHEST, LATS)'], ['methode', 'Méthode (STRAIGHT SET, SUPERSET…)'], ['infos', 'Notes']];

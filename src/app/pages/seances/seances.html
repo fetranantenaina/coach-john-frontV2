@@ -58,6 +58,7 @@
       </div>
     </div>
     <div class="card"><h2>Vue anatomique — muscles sollicités</h2>
+      <a class="bouton-lien" routerLink="/anatomie">Voir le corps en 3D →</a>
       @if (anat.length) { <app-hbars [rows]="anatRows()" /> } @else { <p class="muted">Ajoute des exercices à tes séances.</p> }</div>
     <div class="card"><h2>Indicateurs athlétiques</h2>
       @if (api.isAdmin) { <div class="grid">@for (k of ['force', 'endurance', 'resistance', 'puissance']; track k) { <div><label>{{ k }}</label><input type="number" [(ngModel)]="ni[k]"></div> }</div>
@@ -73,7 +74,28 @@
             <br><span class="muted">@if (e.series) { {{ e.series }} séries × {{ e.rep_temps || '–' }} } @else { {{ e.rep_temps || '' }} }@if (e.charge) { · {{ e.charge }} }@if (e.repos_secondes) { · repos {{ e.repos_secondes }}s }</span>
             @if (e.cibles) { <br><span class="muted">Cible : {{ e.cibles }}</span> }
             @if (e.infos) { <br><span class="muted">Note : {{ e.infos }}</span> }</span></label>
-          @if (api.isAdmin) { <button class="lien err" (click)="retirer(e.id)">✕</button> }</div>
+          <span style="display:flex;gap:10px;align-items:center;flex:none">
+            <button class="lien" (click)="voirMuscles(e)" [attr.aria-expanded]="exoOuvert === e.id">{{ exoOuvert === e.id ? 'Masquer' : 'Muscles' }}</button>
+            @if (api.isAdmin) { <button class="lien err" (click)="retirer(e.id)">✕</button> }</span></div>
+        @if (exoOuvert === e.id) {
+          <div class="exo-muscles">
+            @if (!exoMuscles) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> }
+            @else {
+              @if (exoMuscles.muscles.length && webgl) {
+                <app-corps3d hauteur="44vh" [muscles]="refMuscles" [couleurs]="couleursExo()" [couleurNeutre]="neutreExo()"
+                             [focus]="exoMuscles.muscles[0].code" (choix)="ouvrirMuscle($event)" (indisponible)="webgl = false" />
+              }
+              <div class="chips" style="margin-bottom:0">
+                @for (m of exoMuscles.muscles; track m.code) {
+                  <a class="chip" [routerLink]="'/anatomie'" [queryParams]="{ muscle: m.code, periode: 'tout' }"><i class="pastille" [style.background]="couleursExo()[m.code]"></i>{{ m.nom_fr }}@if (m.part < 1) { <small>{{ Math.round(m.part * 100) }} %</small> }</a>
+                }
+                @for (a of exoMuscles.activites; track a.activite) { <span class="badge-activite"><b>{{ nomsActivites[a.activite] }}</b> {{ a.nom_fr }}</span> }
+                @for (n of exoMuscles.non_reconnus; track n) { <span class="chip" title="Intitulé inconnu : à rattacher dans la vue anatomique">{{ n }} ?</span> }
+              </div>
+              @if (!exoMuscles.muscles.length && !exoMuscles.activites.length) { <p class="muted" style="margin:0">Aucun muscle renseigné pour cet exercice.</p> }
+            }
+          </div>
+        }
       } @empty { @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted">Aucun exercice.</p> } }</div>
     @if (api.isAdmin) {
     <details class="card" open><summary>Ajouter un exercice</summary>

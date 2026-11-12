@@ -5,6 +5,7 @@ import { Clients } from './pages/clients/clients';
 import { Login } from './pages/login/login';
 import { Profil } from './pages/profil/profil';
 import { Seances } from './pages/seances/seances';
+import { Anatomie } from './pages/anatomie/anatomie';
 import { Nutrition } from './pages/nutrition/nutrition';
 import { Ebook } from './pages/ebook/ebook';
 import { Glossaire } from './pages/glossaire/glossaire';
@@ -19,6 +20,7 @@ export const routes: Routes = [
   { path: 'clients', component: Clients, canActivate: [auth, admin] },
   { path: 'profil', component: Profil, canActivate: [auth] },
   { path: 'seances', component: Seances, canActivate: [auth] },
+  { path: 'anatomie', component: Anatomie, canActivate: [auth] },
   { path: 'nutrition', component: Nutrition, canActivate: [auth] },
   { path: 'ebook', component: Ebook, canActivate: [auth] },
   { path: 'glossaire', component: Glossaire, canActivate: [auth] },

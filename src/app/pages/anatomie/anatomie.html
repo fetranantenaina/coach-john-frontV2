@@ -1,0 +1,132 @@
+<main>
+  <a class="lien-retour" routerLink="/seances">← Séances</a>
+  <div class="card">
+    <h2>Vue anatomique</h2>
+    <p class="facette-titre">Période</p>
+    <div class="chips">@for (p of periodes; track p[0]) { <span class="chip" role="button" tabindex="0" [class.on]="periode === p[0]" (click)="choisirPeriode(p[0])" (keyup.enter)="choisirPeriode(p[0])">{{ p[1] }}</span> }</div>
+    <p class="facette-titre">Couleur selon</p>
+    <div class="chips">@for (m of mesures; track m[0]) { <span class="chip" role="button" tabindex="0" [class.on]="mesure === m[0]" (click)="choisirMesure(m[0])" (keyup.enter)="choisirMesure(m[0])">{{ m[1] }}</span> }</div>
+    @if (mesure === 'volume_kg') { <p class="muted" style="margin:0">Volume = charge × répétitions × séries. Les exercices au poids du corps ou à la bande comptent 0 kg : préfère « Séries » pour comparer les muscles.</p> }
+  </div>
+
+  @if (videSurPeriode()) {
+    <p class="alerte">Aucun exercice fait sur cette période. <button class="lien" (click)="choisirPeriode('tout')">Voir tout l'historique</button></p>
+  }
+
+  <div class="card c3d-carte">
+    @if (webgl && vue) {
+      <app-corps3d [muscles]="referentiel" [couleurs]="couleurs" [couleurNeutre]="neutre()" [selection]="selection"
+                   (choix)="choisir($event)" (indisponible)="webgl = false" />
+    } @else if (!webgl) {
+      <p class="muted" style="margin:0">La 3D n'est pas disponible sur cet appareil : la liste des muscles ci-dessous donne les mêmes informations.</p>
+    } @else { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> }
+    @if (vue && webgl) {
+      <div class="echelle" aria-label="Échelle de couleur">
+        <span class="echelle-cases">
+          <span class="echelle-case"><i [style.background]="neutre()"></i>0</span>
+          @for (l of legende(); track $index) { <span class="echelle-case"><i [style.background]="l.c"></i>{{ $last ? '≤ ' + nf(l.a, dec()) : nf(l.a, dec()) }}</span> }
+        </span>
+        <small class="muted">{{ unite() }} par muscle · plus foncé = plus travaillé{{ sombre ? ' (plus lumineux en thème sombre)' : '' }} · touche un muscle pour sa fiche</small>
+      </div>
+    }
+    @if (activitesVisibles().length) {
+      <div class="chips" style="margin-bottom:0">@for (a of activitesVisibles(); track a.activite) {
+        <span class="badge-activite"><b>{{ nomsActivites[a.activite] }}</b> {{ a.nb_seances }} séance{{ a.nb_seances > 1 ? 's' : '' }}@if (a.minutes) { · {{ nf(a.minutes) }} min }</span> }</div>
+    }
+  </div>
+
+  @if (fiche && selection) {
+    <div class="card fiche-muscle" id="fiche-muscle">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+        <div><h2 style="margin-bottom:0">{{ fiche.muscle.nom_fr }}</h2><span class="muted"><i>{{ fiche.muscle.nom_latin }}</i> · {{ fiche.muscle.region }}</span></div>
+        <button class="sec" (click)="fermer()" aria-label="Fermer la fiche">✕</button>
+      </div>
+      @if (edition) {
+        <label>Nom affiché</label><input [(ngModel)]="edition.nom_fr">
+        <label>Explication</label><textarea rows="4" [(ngModel)]="edition.description"></textarea>
+        <label>Côté le plus visible (rotation automatique)</label>
+        <select [(ngModel)]="edition.vue"><option value="face">Face</option><option value="dos">Dos</option><option value="cote">Côté</option></select>
+        <div style="display:flex;gap:8px"><button (click)="enregistrerMuscle()">Enregistrer</button><button class="sec" style="margin-top:10px" (click)="edition = null">Annuler</button></div>
+      } @else {
+        <p>{{ fiche.muscle.description }}</p>
+        @if (api.isAdmin) { <button class="lien" (click)="editer()">Modifier le texte</button> }
+      }
+      <div class="stats" style="margin-top:10px">
+        <div class="stat"><small>Séances</small><b>{{ nf(fiche.stats.nb_seances) }}</b></div>
+        <div class="stat"><small>Séries</small><b>{{ nf(fiche.stats.nb_series, 1) }}</b></div>
+        <div class="stat"><small>Volume</small><b>{{ nf(fiche.stats.volume_kg) }} <em>kg</em></b></div>
+        <div class="stat"><small>Dernier travail</small><b style="font-size:.95rem">{{ fiche.stats.derniere_sollicitation ? depuis(fiche.stats.derniere_sollicitation) : 'jamais' }}</b></div>
+      </div>
+      @if (fiche.derniers_exercices.length) {
+        <p class="facette-titre">Derniers exercices</p>
+        @for (e of fiche.derniers_exercices; track $index) {
+          <div class="row"><span><b>{{ e.exercice }}</b><br><span class="muted">{{ dateFr(e.date_seance) }} · {{ e.series }} série{{ e.series > 1 ? 's' : '' }}@if (e.rep_temps) { × {{ e.rep_temps }} }@if (e.charge) { · {{ e.charge }} }</span></span>
+            @if (e.part < 1) { <span class="pill" title="Part du volume de l'exercice attribuée à ce muscle">{{ Math.round(e.part * 100) }} %</span> }</div>
+        }
+      } @else { <p class="muted">Pas travaillé sur cette période.</p> }
+      <p class="muted" style="margin:10px 0 0">Intitulés du journal comptés ici : {{ fiche.muscle.libelles.join(', ') || '–' }}</p>
+    </div>
+  }
+
+  @if (phrases.length) {
+    <div class="card"><h2>Ce qu'il faut retenir</h2>
+      <ul class="phrases">@for (p of phrases; track $index) { <li>{{ p }}</li> }</ul></div>
+  }
+
+  @if (vue) {
+    <div class="card"><h2>Muscles <span class="muted">({{ travailles() }} / {{ vue.muscles.length }} travaillés)</span></h2>
+      @for (m of musclesTries(); track m.code) {
+        <div class="hb muscle-ligne" role="button" tabindex="0" [class.on]="selection === m.code" (click)="choisir(m.code)" (keyup.enter)="choisir(m.code)">
+          <i class="pastille" [style.background]="couleur(m[mesure])"></i><span>{{ m.nom_fr }}</span>
+          <u><i [style.width.%]="max() ? (m[mesure] / max()) * 100 : 0"></i></u><b>{{ nf(m[mesure], mesure === 'nb_series' ? 1 : 0) }}</b></div>
+      }
+    </div>
+  }
+
+  @if (api.isAdmin && vue?.non_reconnus?.length) {
+    <div class="alerte">Intitulés du journal non reconnus (non comptés sur le corps) :
+      @for (n of vue.non_reconnus; track n.libelle) { <span class="chip" role="button" tabindex="0" (click)="rattacher(n.libelle)" (keyup.enter)="rattacher(n.libelle)">{{ n.libelle }} <small>{{ n.nb_exercices }}</small> → rattacher</span> }</div>
+  }
+
+  @if (api.isAdmin) {
+    <details class="card" id="gestion-libelles" style="margin-top:14px"><summary>Intitulés du journal → muscles</summary>
+      <p class="muted" style="margin-top:0">Chaque intitulé saisi dans la colonne « Muscles ciblés » colore un ou plusieurs muscles. Un groupe (CORE, ARMS…) répartit son volume à parts égales. Les activités (cardio, échauffement, récupération) restent hors du corps.</p>
+      @if (edLib) {
+        <div class="row" style="display:block">
+          <label>Intitulé (tel qu'il est saisi)</label><input [(ngModel)]="edLib.libelle" [disabled]="!edLib.nouveau" placeholder="ex. UPPER BACK">
+          <label>Traduction affichée</label><input [(ngModel)]="edLib.nom_fr" placeholder="ex. Haut du dos">
+          <div class="chips" style="margin-top:10px">
+            <span class="chip" role="button" tabindex="0" [class.on]="edLib.type === 'muscle'" (click)="edLib.type = 'muscle'" (keyup.enter)="edLib.type = 'muscle'">Muscle(s)</span>
+            <span class="chip" role="button" tabindex="0" [class.on]="edLib.type === 'activite'" (click)="edLib.type = 'activite'" (keyup.enter)="edLib.type = 'activite'">Activité hors du corps</span>
+          </div>
+          @if (edLib.type === 'activite') {
+            <select [(ngModel)]="edLib.activite">@for (a of activites; track a[0]) { <option [value]="a[0]">{{ a[1] }}</option> }</select>
+          } @else {
+            <div class="chips">@for (m of referentiel; track m.code) { <span class="chip" role="button" tabindex="0" [class.on]="edLib.codes.includes(m.code)" (click)="basculerCode(m.code)" (keyup.enter)="basculerCode(m.code)">{{ m.nom_fr }}</span> }</div>
+            @if (edLib.codes.length > 1) { <p class="muted" style="margin:0">Volume réparti : {{ Math.round(100 / edLib.codes.length) }} % par muscle.</p> }
+          }
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button (click)="enregistrerLib()" [disabled]="!edLib.libelle.trim() || (edLib.type === 'muscle' && !edLib.codes.length)">Enregistrer</button>
+            <button class="sec" style="margin-top:10px" (click)="edLib = null">Annuler</button>
+            @if (!edLib.nouveau) { <button class="sec err" style="margin-top:10px;margin-left:auto" (click)="supprimerLib(edLib.libelle)">Supprimer</button> }
+          </div>
+        </div>
+      } @else {
+        <div style="display:flex;gap:8px;align-items:center"><input [(ngModel)]="filtreLib" placeholder="Rechercher un intitulé"><button style="margin:0;white-space:nowrap" (click)="editerLib(null)">+ Ajouter</button></div>
+        @for (l of libellesFiltres(); track l.id) {
+          <div class="row" role="button" tabindex="0" style="cursor:pointer" (click)="editerLib(l)" (keyup.enter)="editerLib(l)">
+            <span><b>{{ l.libelle }}</b> <span class="muted">{{ l.nom_fr }}</span><br><span class="muted">→ {{ resumeLib(l) }}</span></span>
+            @if (l.type === 'activite') { <span class="pill">hors du corps</span> }</div>
+        }
+      }
+    </details>
+  }
+
+  <details class="card credits"><summary>Crédits du modèle 3D</summary>
+    <p>Modèle dérivé de <a href="https://github.com/LluisV/Z-Anatomy" target="_blank" rel="noopener">Z-Anatomy</a> (Lluís Vinent, CC BY-SA 4.0),
+      lui-même issu de <i>BodyParts3D</i> (The Database Center for Life Science, CC BY-SA 2.1 Japon).</p>
+    <p>Modifications : muscles regroupés en {{ referentiel.length || 23 }} zones, contour de la peau, simplification et compression.
+      Le modèle modifié est diffusé sous la même licence : <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.fr" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+      (<a href="/modeles/CREDITS.md" target="_blank">détails</a>, <a href="/modeles/corps.glb" download>télécharger le modèle</a>). Le code de l'application n'est pas concerné.</p>
+  </details>
+</main>

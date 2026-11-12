@@ -33,3 +33,30 @@
 .courbe .bulle rect{fill:var(--barre);stroke:var(--bord)}.courbe .bulle text{fill:var(--blanc);font-size:11px}
 .legende{display:flex;flex-wrap:wrap;gap:10px;font-size:.78rem;color:var(--gris);margin-bottom:6px}.legende i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
 .resume{margin:2px 0 6px}.resume b{font-size:1.5rem;color:var(--kaki-cl)}
+
+/* Vue anatomique 3D */
+.lien-retour{display:inline-block;color:var(--kaki-cl);margin:0 0 10px;text-decoration:none;font-size:.9rem}
+.c3d{position:relative;width:100%;min-height:320px;max-height:720px;border-radius:12px;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,var(--item),var(--carte) 70%)}
+.c3d canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}.c3d canvas:active{cursor:grabbing}
+.c3d-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--gris);font-size:.9rem;text-align:center;padding:16px}
+.c3d-vues{position:absolute;left:8px;right:8px;top:8px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;pointer-events:none}
+.c3d-vues .chip{pointer-events:auto;margin:0;padding:4px 10px;font-weight:500;color:var(--blanc);background:color-mix(in srgb,var(--carte) 85%,transparent)}
+.c3d-zoom{position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px}
+.c3d-zoom button{width:36px;height:36px;padding:0;font-size:1.2rem;line-height:1;background:color-mix(in srgb,var(--carte) 85%,transparent)}
+.echelle{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.echelle-cases{display:flex;gap:2px}
+.echelle-case{flex:1;display:flex;flex-direction:column;gap:3px;font-size:.7rem;color:var(--gris);text-align:center;min-width:0}
+.echelle-case i{display:block;height:10px;border-radius:3px}
+.badge-activite{display:inline-flex;gap:5px;align-items:center;padding:5px 11px;border-radius:999px;background:var(--item);border:1px dashed var(--kaki);font-size:.8rem}
+.badge-activite b{color:var(--kaki-cl)}
+.fiche-muscle{border-color:var(--sable)}
+.phrases{margin:0;padding-left:18px}.phrases li{margin:4px 0}
+.muscle-ligne{cursor:pointer;border-radius:8px;padding:3px 4px;margin:2px -4px}.muscle-ligne:hover,.muscle-ligne.on{background:var(--item)}
+.muscle-ligne.on span{color:var(--sable);font-weight:600}.muscle-ligne span{text-transform:none}
+.pastille{display:inline-block;width:12px;height:12px;border-radius:4px;flex:none}
+.credits p{font-size:.82rem;color:var(--gris)}.credits a{color:var(--kaki-cl)}
+.exo-muscles{margin-top:8px;padding-top:8px;border-top:1px dashed var(--bord)}
+.exo-muscles .c3d{min-height:260px}
+@media (max-width:480px){.c3d-vues .chip{font-size:.72rem;padding:3px 8px}}
+.bouton-lien{display:inline-block;margin:0 0 8px;color:var(--sable);font-weight:600;text-decoration:none}
+a.chip{color:inherit;text-decoration:none}

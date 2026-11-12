@@ -27,7 +27,7 @@ import { ChoixClient } from './pages/choix-client/choix-client';
   @for (k of [api.cible?.id]; track k) { @if (needsClient()) { <app-choix-client /> } @else { <router-outlet /> } }
   @if (api.token) {
     <nav>@for (t of tabs(); track t[0]) {
-      <a [routerLink]="'/' + t[0]" routerLinkActive="on"><span><app-icon [name]="t[0]" /></span>{{ t[1] }}</a> }
+      <a [routerLink]="'/' + t[0]" routerLinkActive="on" [class.on]="t[0] === 'seances' && router.url.startsWith('/anatomie')"><span><app-icon [name]="t[0]" /></span>{{ t[1] }}</a> }
     </nav>
   }`,
 })
@@ -38,6 +38,6 @@ export class App {
   tabs() { return this.api.isAdmin ? [['clients', 'Clients'], ...this.base] : this.base; }
   changer(id: any) { const u = this.api.clients.find(c => c.id == id); if (u) this.api.setCible({ id: u.id, name: u.name }); }
   /** Admin sans client sélectionné sur une page de données : on propose de choisir un client. */
-  needsClient() { return this.api.isAdmin && !this.api.cible && /^\/(profil|seances|nutrition)/.test(this.router.url); }
+  needsClient() { return this.api.isAdmin && !this.api.cible && /^\/(profil|seances|anatomie|nutrition)/.test(this.router.url); }
   constructor() { this.api.connect(); this.api.reveil(); }
 }
