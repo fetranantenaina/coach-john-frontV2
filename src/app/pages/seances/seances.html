@@ -58,8 +58,7 @@
       </div>
     </div>
     <div class="card"><h2>Vue anatomique — muscles sollicités</h2>
-      <a class="bouton-lien" routerLink="/anatomie">Voir le corps en 3D →</a>
-      @if (anat.length) { <app-hbars [rows]="anatRows()" /> } @else { <p class="muted">Ajoute des exercices à tes séances.</p> }</div>
+      <a class="bouton-lien" routerLink="/anatomie">Voir le corps en 3D →</a></div>
     <div class="card"><h2>Indicateurs athlétiques</h2>
       @if (api.isAdmin) { <div class="grid">@for (k of ['force', 'endurance', 'resistance', 'puissance']; track k) { <div><label>{{ k }}</label><input type="number" [(ngModel)]="ni[k]"></div> }</div>
       <button (click)="saveInd()">Enregistrer</button> }

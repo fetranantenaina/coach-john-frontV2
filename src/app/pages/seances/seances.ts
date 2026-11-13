@@ -30,7 +30,7 @@ export class Seances {
   }
   neutreExo() { return themeSombre() ? NEUTRE.sombre : NEUTRE.clair; }
   ouvrirMuscle(code: string | null) { if (code) this.router.navigate(['/anatomie'], { queryParams: { muscle: code, periode: 'tout' } }); }
-  list: any[] = []; anat: any[] = []; ind: any = {}; exos: any[] = []; s: any = null;
+  list: any[] = []; ind: any = {}; exos: any[] = []; s: any = null;
   ns: any = {}; ni: any = {}; ne: any = {}; d10 = d10;
   cs = [['series', 'Séries'], ['rep_temps', 'Répétitions / temps (15, 20sec, 15mn)'], ['charge', 'Charge / niveau / vitesse (4kg, Lvl 2…)'], ['repos_secondes', 'Repos (s)'], ['cibles', 'Muscles ciblés (ex. CHEST, LATS)'], ['methode', 'Méthode (STRAIGHT SET, SUPERSET…)'], ['infos', 'Notes']];
   constructor(public api: Api) { this.load(); if (api.isAdmin) this.chargerCatalogue(); }
@@ -48,8 +48,8 @@ export class Seances {
         if (derniere.length) this.mois = this.debutMois(d10(derniere[0].date_seance));
         this.initialise = true;
       }
-      const [list, anat, ind] = await Promise.all([this.api.get(this.urlMois()), this.api.get('/vue-anatomique'), this.api.get('/indicateurs-athletiques/histogramme')]);
-      this.list = list; this.anat = anat; this.ind = ind;
+      const [list, ind] = await Promise.all([this.api.get(this.urlMois()), this.api.get('/indicateurs-athletiques/histogramme')]);
+      this.list = list; this.ind = ind;
     } catch (e: any) { this.api.toast(e.message); }
   }
   private pad = (n: number) => String(n).padStart(2, '0');
@@ -122,7 +122,6 @@ export class Seances {
   choisirNom(n: string) { this.nx.nom = n; }
   choisirGroupe(g: string) { this.nx.groupe_musculaire = this.norm(this.nx.groupe_musculaire) === this.norm(g) ? '' : g; }
   choisirMethode(m: string) { this.nx.methode = this.norm(this.nx.methode) === this.norm(m) ? '' : m; }
-  anatRows(): [string, number][] { return this.anat.map(a => [a.groupe_musculaire || 'autre', Number(a.nb_series_total) || Number(a.nb_exercices)]); }
   indRows(): [string, number][] { const l = (a: any[]) => Number(a[a.length - 1]) || 0; return [['Force', l(this.ind.force)], ['Endurance', l(this.ind.endurance)], ['Résistance', l(this.ind.resistance)], ['Puissance', l(this.ind.puissance)]]; }
   nx: any = {};
   async creerExo() { try { await this.api.post('/exercices', this.api.clean(this.nx)); this.nx = {}; this.api.toast('Exercice ajouté'); this.chargerCatalogue(); } catch (e: any) { this.api.toast(e.message); } }
