@@ -15,7 +15,7 @@ import { ChoixClient } from './pages/choix-client/choix-client';
   @if (!api.token) { <div style="position:fixed;top:12px;right:12px;z-index:6;display:flex;gap:8px"><app-outils /></div> }
   @if (api.token) {
     <header><span class="logo"><span class="logo-mark"></span>COACH <b>JOHN</b></span>
-      <span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+      <span class="entete-actions">
         <a class="hicon" routerLink="/chat" routerLinkActive="on" aria-label="Chat"><app-icon name="chat" />@if (api.nonLus) { <i class="badge">{{ api.nonLus }}</i> }</a>
         <app-outils /><button class="sec" (click)="api.logout()">Déconnexion</button></span></header>
   }
