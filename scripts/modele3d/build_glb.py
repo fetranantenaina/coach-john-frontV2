@@ -21,9 +21,10 @@ CARTE = {
                    "Humero-ulnar head of flexor digitorum superficialis", "Radial head of flexor digitorum superficialis",
                    "Superficial head of pronator teres"],
     "grand_dorsal": ["Latissimus dorsi muscle", "Teres major muscle"],
-    "trapeze_superieur": ["Descending part of trapezius muscle"],
+    # Noms inversés dans Z-Anatomy : la « Ascending part » est le haut du muscle (cou), la « Descending part » le bas
+    "trapeze_superieur": ["Ascending part of trapezius muscle"],
     "trapeze_moyen": ["Transverse part of trapezius muscle"],
-    "trapeze_inferieur": ["Ascending part of trapezius muscle"],
+    "trapeze_inferieur": ["Descending part of trapezius muscle"],
     "rhomboides": ["Rhomboid major muscle", "Rhomboid minor muscle"],
     "lombaires": ["Iliocostalis lumborum muscle", "Iliocostalis thoracis muscle", "Longissimus thoracis muscle",
                   "Spinalis thoracis muscle"],

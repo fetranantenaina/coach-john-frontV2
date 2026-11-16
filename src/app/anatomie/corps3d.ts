@@ -2,6 +2,7 @@ import {
   AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject,
 } from '@angular/core';
 import type * as THREE_NS from 'three';
+import { Api } from '../api';
 
 /** Muscle tel que renvoyé par l'API (/anatomie/muscles ou /anatomie/vue). */
 export interface Muscle3D { code: string; objets_3d: string[]; vue?: string; }
@@ -9,7 +10,9 @@ export interface Muscle3D { code: string; objets_3d: string[]; vue?: string; }
 type Three = typeof THREE_NS;
 type Vue = 'face' | 'dos' | 'gauche' | 'droite';
 
-const MODELE = '/modeles/corps.glb';
+/** Modèles 3D : masculin (Z-Anatomy) et sa variante féminine (scripts/modele3d/feminiser.mjs), mêmes noms d'objets. */
+export type Sexe = 'homme' | 'femme';
+const MODELES: Record<Sexe, string> = { homme: '/modeles/corps.glb', femme: '/modeles/corps-femme.glb' };
 // Le modèle regarde vers +Z ; le côté gauche du corps est en +X (corps.glb, voir scripts/modele3d)
 const AZIMUTS: Record<Vue, number> = { face: 0, dos: Math.PI, gauche: Math.PI / 2, droite: -Math.PI / 2 };
 const CIBLE_Y = 0.95;
@@ -23,19 +26,21 @@ export function webglDisponible(): boolean {
   } catch { return false; }
 }
 
-// Modèle chargé une seule fois pour toute l'app (chaque visionneuse en fait une copie)
-let modele: Promise<{ three: Three; scene: THREE_NS.Group }> | null = null;
-function chargerModele() {
+// Chaque modèle est chargé une seule fois pour toute l'app (chaque visionneuse en fait une copie)
+const modeles = new Map<Sexe, Promise<{ three: Three; scene: THREE_NS.Group }>>();
+function chargerModele(sexe: Sexe) {
+  let modele = modeles.get(sexe);
   if (!modele) {
     modele = (async () => {
       const [three, { GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
         import('three'), import('three/addons/loaders/GLTFLoader.js'), import('three/addons/libs/meshopt_decoder.module.js'),
       ]);
       const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-      const gltf = await loader.loadAsync(MODELE);
+      const gltf = await loader.loadAsync(MODELES[sexe]);
       return { three, scene: gltf.scene };
     })();
-    modele.catch(() => (modele = null)); // nouvel essai possible après une erreur réseau
+    modeles.set(sexe, modele);
+    modele.catch(() => modeles.delete(sexe)); // nouvel essai possible après une erreur réseau
   }
   return modele;
 }
@@ -53,7 +58,8 @@ function chargerModele() {
     @if (etat === 'chargement') { <div class="c3d-msg"><i class="spinner"></i>Chargement du corps en 3D…</div> }
     @if (etat === 'erreur') { <div class="c3d-msg">Le modèle 3D n'a pas pu être chargé.<button class="sec" (click)="demarrer()">Réessayer</button></div> }
     @if (etat === 'pret') {
-      <div class="c3d-vues">@for (v of vues; track v[0]) { <button class="chip" type="button" (click)="tourner(v[0])">{{ v[1] }}</button> }</div>
+      <div class="c3d-vues">@for (v of vues; track v[0]) { <button class="chip" type="button" (click)="tourner(v[0])">{{ v[1] }}</button> }
+        <button class="chip" type="button" (click)="basculerSexe()" [attr.aria-label]="sexe === 'femme' ? 'Afficher le corps masculin' : 'Afficher le corps féminin'">{{ sexe === 'femme' ? '♀ Femme' : '♂ Homme' }}</button></div>
       <div class="c3d-zoom"><button type="button" class="sec" (click)="zoomer(0.8)" aria-label="Zoomer">+</button><button type="button" class="sec" (click)="zoomer(1.25)" aria-label="Dézoomer">−</button></div>
     }
   </div>`,
@@ -78,7 +84,11 @@ export class Corps3d implements AfterViewInit, OnChanges, OnDestroy {
   etat: 'chargement' | 'pret' | 'erreur' | 'indisponible' = 'chargement';
   vues: [Vue, string][] = [['face', 'Face'], ['dos', 'Dos'], ['gauche', 'Gauche'], ['droite', 'Droite']];
 
+  /** Corps affiché : d'après le sexe du profil du client (femme -> modèle féminin), modifiable avec le bouton. */
+  sexe: Sexe = 'homme';
+  private api = inject(Api);
   private zone = inject(NgZone);
+  private corps?: THREE_NS.Group;
   private T?: Three;
   private renderer?: THREE_NS.WebGLRenderer;
   private scene?: THREE_NS.Scene;
@@ -101,7 +111,8 @@ export class Corps3d implements AfterViewInit, OnChanges, OnDestroy {
     if (!webglDisponible()) { this.etat = 'indisponible'; this.indisponible.emit(); return; }
     this.etat = 'chargement';
     try {
-      const { three, scene } = await chargerModele();
+      this.sexe = await this.api.sexeCorps();
+      const { three, scene } = await chargerModele(this.sexe);
       if (this.detruit) return;
       this.zone.runOutsideAngular(() => this.construire(three, scene.clone(true)));
       this.etat = 'pret';
@@ -136,29 +147,7 @@ export class Corps3d implements AfterViewInit, OnChanges, OnDestroy {
     this.scene = scene;
     this.camera = camera;
 
-    // Objets 3D -> codes muscles (référentiel de l'API, sinon nom "code_g" / "code_d")
-    const objetVersCode = new Map<string, string>();
-    for (const m of this.muscles) for (const o of m.objets_3d || []) objetVersCode.set(o, m.code);
-    corps.traverse((o) => {
-      const mesh = o as THREE_NS.Mesh;
-      if (!mesh.isMesh) return;
-      if (o.name === 'silhouette') {
-        // contour de la peau : faces arrière seulement, il dessine le bord du corps sans voiler les muscles
-        mesh.material = new T.MeshBasicMaterial({ transparent: true, opacity: 0.12, side: T.BackSide, depthWrite: false });
-        mesh.renderOrder = 2;
-        this.silhouette = mesh;
-        return;
-      }
-      mesh.material = new T.MeshStandardMaterial({ roughness: 0.62, metalness: 0 });
-      if (o.name === 'contexte') { this.contexte = mesh; this.cliquables.push(mesh); return; }
-      const code = objetVersCode.get(o.name) || o.name.replace(/_[gd]$/, '');
-      this.codeDe.set(mesh, code);
-      this.parCode.set(code, [...(this.parCode.get(code) || []), mesh]);
-      this.cliquables.push(mesh);
-    });
-    scene.add(corps);
-    this.appliquerTheme();
-    this.appliquerCouleurs();
+    this.poserCorps(corps);
 
     import('three/addons/controls/OrbitControls.js').then(({ OrbitControls }) => {
       if (this.detruit) return;
@@ -200,6 +189,52 @@ export class Corps3d implements AfterViewInit, OnChanges, OnDestroy {
     this.redimensionner();
 
     renderer.setAnimationLoop((t) => this.image(t));
+  }
+
+  /** Installe un corps dans la scène (au démarrage, ou à la place du précédent quand on change de modèle). */
+  private poserCorps(corps: THREE_NS.Group) {
+    const T = this.T!;
+    if (this.corps) {
+      this.scene!.remove(this.corps);
+      this.corps.traverse((o) => ((o as THREE_NS.Mesh).material as THREE_NS.Material | undefined)?.dispose?.());
+    }
+    this.parCode.clear(); this.codeDe.clear(); this.cliquables = []; this.contexte = this.silhouette = undefined;
+    // Objets 3D -> codes muscles (référentiel de l'API, sinon nom "code_g" / "code_d")
+    const objetVersCode = new Map<string, string>();
+    for (const m of this.muscles) for (const o of m.objets_3d || []) objetVersCode.set(o, m.code);
+    corps.traverse((o) => {
+      const mesh = o as THREE_NS.Mesh;
+      if (!mesh.isMesh) return;
+      if (o.name === 'silhouette') {
+        // contour de la peau : faces arrière seulement, il dessine le bord du corps sans voiler les muscles
+        mesh.material = new T.MeshBasicMaterial({ transparent: true, opacity: 0.12, side: T.BackSide, depthWrite: false });
+        mesh.renderOrder = 2;
+        this.silhouette = mesh;
+        return;
+      }
+      mesh.material = new T.MeshStandardMaterial({ roughness: 0.62, metalness: 0 });
+      if (o.name === 'contexte') { this.contexte = mesh; this.cliquables.push(mesh); return; }
+      const code = objetVersCode.get(o.name) || o.name.replace(/_[gd]$/, '');
+      this.codeDe.set(mesh, code);
+      this.parCode.set(code, [...(this.parCode.get(code) || []), mesh]);
+      this.cliquables.push(mesh);
+    });
+    this.scene!.add(corps);
+    this.corps = corps;
+    this.aRendre = true;
+    this.appliquerTheme();
+    this.appliquerCouleurs();
+  }
+
+  /** Passe du corps masculin au corps féminin (ou l'inverse), sans changer de vue. */
+  async basculerSexe() {
+    const sexe: Sexe = this.sexe === 'femme' ? 'homme' : 'femme';
+    try {
+      const { scene } = await chargerModele(sexe);
+      if (this.detruit || !this.scene) return;
+      this.sexe = sexe;
+      this.zone.runOutsideAngular(() => this.poserCorps(scene.clone(true)));
+    } catch (e) { console.error(e); this.api.toast("Le modèle 3D n'a pas pu être chargé"); }
   }
 
   private image(t: number) {

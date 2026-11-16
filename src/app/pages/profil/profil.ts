@@ -40,7 +40,7 @@ export class Profil {
     try { this.hist = await this.api.get('/releves/histogramme'); this.construireCourbes(); } catch {}
   }
   async saveProfil() {
-    try { const { sexe, date_naissance, pal, objectif, statut_sante } = this.p; await this.api.post('/profil', this.api.clean({ sexe, date_naissance, pal, objectif, statut_sante })); this.api.toast('Profil enregistré'); this.load(); }
+    try { const { sexe, date_naissance, pal, objectif, statut_sante } = this.p; await this.api.post('/profil', this.api.clean({ sexe, date_naissance, pal, objectif, statut_sante })); this.api.toast('Profil enregistré'); this.api.oublierSexe(); this.load(); }
     catch (e: any) { this.api.toast(e.message); }
   }
   async saveReleve() {

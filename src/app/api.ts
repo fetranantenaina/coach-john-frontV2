@@ -23,6 +23,19 @@ export class Api {
   async loadClients() { if (!this.isAdmin) return; try { this.clients = (await this.get('/utilisateurs')).filter((u: any) => u.role === 'user'); } catch {} }
   toastMsg = '';
 
+  /** Sexe du corps 3D à afficher pour l'utilisateur (ou le client géré) : modèle féminin si le profil dit « femme ». */
+  private sexes = new Map<string, Promise<'homme' | 'femme'>>();
+  sexeCorps(): Promise<'homme' | 'femme'> {
+    const cle = String(this.isAdmin ? this.cible?.id ?? 'admin' : this.me()?.id);
+    let r = this.sexes.get(cle);
+    if (!r) {
+      r = this.get('/profil').then((p: any) => (p?.sexe === 'femme' ? 'femme' : 'homme') as 'homme' | 'femme', () => 'homme' as const);
+      this.sexes.set(cle, r);
+    }
+    return r;
+  }
+  oublierSexe() { this.sexes.clear(); }
+
   me(): any { try { return JSON.parse(atob(this.token!.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); } catch { return null; } }
 
   // --- Attente du serveur (l'hébergement gratuit s'endort : le réveil peut durer jusqu'à ~1 minute) ---

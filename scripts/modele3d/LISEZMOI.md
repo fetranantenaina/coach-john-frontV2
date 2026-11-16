@@ -16,8 +16,19 @@ npx @gltf-transform/cli@4.1.1 optimize corps.brut.glb ../../public/modeles/corps
    `node retirer_genitaux.mjs ../../public/modeles/corps.glb ../../public/modeles/corps.glb compresse pubis`
    (supprime les morceaux de peau du pénis, du scrotum et de la toison pubienne, repérés par leur position).
 
-5. Contrôle visuel : `blender -b --factory-startup --python render.py -- ../../public/modeles/corps.glb apercu`
+5. Variante féminine `corps-femme.glb` (même dossier de dépendances que l'étape 4) :
+   ```
+   node feminiser.mjs ../../public/modeles/corps.glb corps-femme.brut.glb
+   npx @gltf-transform/cli@4.1.1 optimize corps-femme.brut.glb ../../public/modeles/corps-femme.glb --compress meshopt --texture-compress false --simplify false --join false --flatten false --instance false --palette false
+   ```
+   Déforme tous les maillages avec le même champ (épaules et taille affinées, bassin élargi, fessiers, bras écartés, poitrine sur la peau, taille ×0,96) :
+   les objets gardent les mêmes noms, donc les mêmes codes muscles. L'app choisit ce modèle quand le profil indique « femme » (bouton ♀/♂ pour changer).
+
+6. Contrôle visuel : `blender -b --factory-startup --python render.py -- ../../public/modeles/corps.glb apercu`
    (produit `apercu_face.png`, `apercu_dos.png`, `apercu_cote.png`).
+
+`corriger_trapezes.mjs` : les parties « Descending / Ascending » du trapèze sont inversées dans Z-Anatomy. `build_glb.py` en tient compte ;
+ce script corrige un glb construit avant cette correction (sans effet s'il est déjà correct).
 
 Contenu du glb (1,2 Mo, environ 234 000 faces, corps de 1,75 m, pieds à y = 0) :
 - `<code>_g` / `<code>_d` : les 23 muscles Coach John, côté gauche / droit (code = `muscles.code` en base) ;
