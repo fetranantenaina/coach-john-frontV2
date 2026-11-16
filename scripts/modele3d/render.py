@@ -2,12 +2,11 @@ import bpy, sys, math, colorsys, mathutils
 a = sys.argv[sys.argv.index("--")+1:]
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=a[0])
-codes = sorted({o.name.rsplit("_",1)[0] for o in bpy.data.objects if o.type=="MESH" and o.name not in ("contexte","silhouette","glande_mammaire")})
+codes = sorted({o.name.rsplit("_",1)[0] for o in bpy.data.objects if o.type=="MESH" and o.name not in ("contexte","silhouette")})
 for o in bpy.data.objects:
     if o.type!="MESH": continue
     if o.name=="silhouette": o.hide_render=True; continue
     if o.name=="contexte": o.color=(0.6,0.6,0.6,1); continue
-    if o.name=="glande_mammaire": o.color=(0.91,0.77,0.42,1); continue
     i=codes.index(o.name.rsplit("_",1)[0]); r,g,b=colorsys.hsv_to_rgb(i/len(codes),0.75,0.95); o.color=(r,g,b,1)
 sc=bpy.context.scene; sc.render.engine="BLENDER_WORKBENCH"; sc.display.shading.color_type="OBJECT"
 sc.render.resolution_x=500; sc.render.resolution_y=900
