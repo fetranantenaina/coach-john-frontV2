@@ -21,7 +21,7 @@ npx @gltf-transform/cli@4.1.1 optimize corps.brut.glb ../../public/modeles/corps
    node feminiser.mjs ../../public/modeles/corps.glb corps-femme.brut.glb
    npx @gltf-transform/cli@4.1.1 optimize corps-femme.brut.glb ../../public/modeles/corps-femme.glb --compress meshopt --texture-compress false --simplify false --join false --flatten false --instance false --palette false
    ```
-   Affine les muscles du haut du corps (face extérieure seulement), puis déforme tous les maillages avec le même champ (épaules et taille affinées, bassin élargi, fessiers, cuisses convergeant vers les genoux, bras écartés, poitrine en goutte sur la peau, taille ×0,96) :
+   Affine les muscles (face extérieure seulement : haut du corps surtout, abdos, jambes, cou et dentelés), adoucit leur relief (lissage de Taubin), ajoute de la graisse sous-cutanée aux hanches et cuisses, puis déforme tous les maillages avec le même champ (épaules et taille affinées, bassin élargi, fessiers, cuisses convergeant vers les genoux, bras écartés, poitrine en goutte sur la peau, taille ×0,96) :
    les objets gardent les mêmes noms, donc les mêmes codes muscles. L'app choisit ce modèle quand le profil indique « femme » (bouton ♀/♂ pour changer).
 
 6. Contrôle visuel : `blender -b --factory-startup --python render.py -- ../../public/modeles/corps.glb apercu`

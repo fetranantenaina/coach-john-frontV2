@@ -3,8 +3,10 @@
 //
 // Construit la variante féminine du corps à partir de corps.glb, en déformant tous les maillages
 // avec le même champ (les muscles restent donc sous la peau et gardent leurs noms / codes) :
-//   - muscles du haut du corps moins épais (pectoraux, épaules, bras, trapèzes, dorsaux) : seule la face
+//   - muscles moins épais (haut du corps surtout, abdos, jambes, cou et dentelés du « contexte ») : seule la face
 //     extérieure rentre, d'une fraction de l'épaisseur locale du muscle (il reste collé au corps) ;
+//   - relief des muscles adouci (lissage de Taubin, sans perte de volume) ;
+//   - peau : graisse sous-cutanée sur les hanches, les fesses et les cuisses ;
 //   - tronc : épaules et taille plus étroites, bassin plus large, fessiers plus ronds, cou plus fin ;
 //   - jambes : cuisses qui convergent vers les genoux (angle Q plus marqué), genoux plus fins ;
 //   - bras : translatés avec l'épaule, légèrement écartés (les mains passent au-dessus des hanches), un peu plus fins ;
@@ -65,6 +67,9 @@ function bras([x, y, z]) {
   return [s * rx, ry, pz];
 }
 
+// Graisse sous-cutanée (peau seulement) : répartition féminine sur les hanches, les fesses et les cuisses (épaisseur en m)
+const GRAISSE = [[0.45, 0], [0.62, 0.004], [0.80, 0.007], [0.92, 0.006], [1.02, 0.003], [1.10, 0]];
+
 // Poitrine (peau seulement), en goutte : longue pente douce au-dessus, volume en bas, pli net dessous,
 // légèrement tournée vers l'extérieur. Coordonnées après la déformation du tronc.
 function poitrine([x, y, z], nz) {
@@ -99,17 +104,27 @@ for (const n of nodes) {
   n.setTranslation([0, 0, 0]).setScale([1, 1, 1]);
 }
 
-// --- Muscles du haut du corps moins épais ---
-// Pour chaque sommet de la face extérieure (celle tournée vers la peau), on mesure l'épaisseur du muscle
-// par un rayon lancé vers l'intérieur, puis on recule le sommet d'une fraction de cette épaisseur (8 mm max).
+// --- Muscles moins épais ---
+// Repères : chez la femme, la masse musculaire vaut environ 60-70 % de celle de l'homme pour le haut du corps,
+// 70-75 % pour le bas. Pour chaque sommet de la face extérieure d'un muscle (celle tournée vers la peau), on mesure
+// l'épaisseur du muscle par un rayon lancé vers l'intérieur, puis on recule le sommet d'une fraction de cette
+// épaisseur (8 mm max). La face profonde (contre les os) ne bouge pas : le muscle reste attaché au squelette.
 const AFFINER = {
+  // haut du corps
   grand_pectoral: 0.32, pectoral_claviculaire: 0.32, deltoide_anterieur: 0.28, deltoide_lateral: 0.28, deltoide_posterieur: 0.28,
   biceps: 0.28, triceps: 0.25, avant_bras: 0.15, trapeze_superieur: 0.28, trapeze_moyen: 0.2, trapeze_inferieur: 0.2, grand_dorsal: 0.2,
+  rhomboides: 0.12,
+  // tronc
+  grand_droit: 0.2, obliques: 0.15,
+  // bas du corps (moins réduit ; fessiers conservés)
+  quadriceps: 0.12, ischio_jambiers: 0.1, adducteurs: 0.08, mollets: 0.12, tenseur_fascia_lata: 0.1,
 };
+/** « contexte » (tous les autres muscles en un seul maillage) : fraction selon la hauteur (cou, dentelés, coiffe...). */
+const AFFINER_CONTEXTE = [[0.5, 0.08], [0.85, 0.1], [1.0, 0.12], [1.15, 0.18], [1.42, 0.25], [1.52, 0.25], [1.6, 0]];
 const OFFSET_MAX = 0.008;
 {
   const peau = nodes.find((n) => n.getName() === 'silhouette').getMesh().listPrimitives()[0].getAttribute('POSITION');
-  const C = 0.02, g = new Map(), v = [0, 0, 0];
+  const C = 0.02, g = new Map();
   const k = (x, y, z) => `${Math.floor(x / C)},${Math.floor(y / C)},${Math.floor(z / C)}`;
   for (let i = 0; i < peau.getCount(); i++) { const q = peau.getElement(i, [0, 0, 0]); const c = k(...q); if (!g.has(c)) g.set(c, []); g.get(c).push(q); }
   const distPeau = (q) => {
@@ -129,21 +144,42 @@ const OFFSET_MAX = 0.008;
     const w = (d[0] * q[0] + d[1] * q[1] + d[2] * q[2]) * inv; if (w < 0 || u + w > 1) return Infinity;
     const t = (e2[0] * q[0] + e2[1] * q[1] + e2[2] * q[2]) * inv; return t > 1e-4 ? t : Infinity;
   };
+  const LONG = 0.08, CT = 0.015; // longueur max du rayon, taille des cellules de la grille de triangles
   let bouges = 0;
   for (const n of nodes) {
-    const frac = AFFINER[n.getName().replace(/_[gd]$/, '')]; if (!frac) continue;
+    const nom = n.getName().replace(/_[gd]$/, '');
+    const fracDe = nom === 'contexte' ? (q) => courbe(AFFINER_CONTEXTE, q[1]) : AFFINER[nom] ? () => AFFINER[nom] : null;
+    if (!fracDe) continue;
     for (const p of n.getMesh().listPrimitives()) {
       const a = p.getAttribute('POSITION'), N = p.getAttribute('NORMAL'), idx = p.getIndices().getArray();
       const P = Array.from({ length: a.getCount() }, (_, i) => a.getElement(i, [0, 0, 0]));
-      const T = []; for (let f = 0; f < idx.length; f += 3) T.push([P[idx[f]], P[idx[f + 1]], P[idx[f + 2]], idx[f], idx[f + 1], idx[f + 2]]);
+      // grille des triangles (chaque triangle rangé dans les cellules que couvre sa boîte)
+      const gt = new Map(), kc = (x, y, z) => `${x},${y},${z}`;
+      for (let f = 0; f < idx.length; f += 3) {
+        const A = P[idx[f]], B = P[idx[f + 1]], D = P[idx[f + 2]];
+        const mn = [0, 1, 2].map((j) => Math.floor(Math.min(A[j], B[j], D[j]) / CT)), mx = [0, 1, 2].map((j) => Math.floor(Math.max(A[j], B[j], D[j]) / CT));
+        for (let x = mn[0]; x <= mx[0]; x++) for (let y = mn[1]; y <= mx[1]; y++) for (let z = mn[2]; z <= mx[2]; z++) {
+          const c = kc(x, y, z); if (!gt.has(c)) gt.set(c, []); gt.get(c).push(f);
+        }
+      }
+      const vu = new Int32Array(idx.length / 3).fill(-1);
       const dep = P.map((q, i) => {
+        const frac = fracDe(q); if (!frac) return null;
         const nn = N.getElement(i, [0, 0, 0]);
         const dehors = distPeau([q[0] + nn[0] * 0.004, q[1] + nn[1] * 0.004, q[2] + nn[2] * 0.004]);
         const dedans = distPeau([q[0] - nn[0] * 0.004, q[1] - nn[1] * 0.004, q[2] - nn[2] * 0.004]);
-        if (!(dehors < dedans)) return null; // face profonde (contre les os) : ne bouge pas
+        if (!(dehors < dedans)) return null; // face profonde ou muscle loin de la peau : ne bouge pas
         const d = [-nn[0], -nn[1], -nn[2]]; let t = Infinity;
-        for (const tr of T) if (tr[3] !== i && tr[4] !== i && tr[5] !== i) t = Math.min(t, rayon(q, d, tr[0], tr[1], tr[2]));
-        if (!isFinite(t) || t > 0.08) return null;
+        for (let s = 0; s <= LONG; s += CT / 2) {
+          const c = kc(...[0, 1, 2].map((j) => Math.floor((q[j] + d[j] * s) / CT)));
+          for (const f of gt.get(c) || []) {
+            if (vu[f / 3] === i) continue; vu[f / 3] = i;
+            if (idx[f] === i || idx[f + 1] === i || idx[f + 2] === i) continue;
+            t = Math.min(t, rayon(q, d, P[idx[f]], P[idx[f + 1]], P[idx[f + 2]]));
+          }
+          if (t < s) break;
+        }
+        if (!isFinite(t) || t > LONG) return null;
         const o = Math.min(frac * t, OFFSET_MAX);
         return [q[0] + d[0] * o, q[1] + d[1] * o, q[2] + d[2] * o];
       });
@@ -151,6 +187,43 @@ const OFFSET_MAX = 0.008;
     }
   }
   console.log('sommets de muscles affinés :', bouges);
+}
+
+// --- Relief adouci : lissage de Taubin (lambda / mu, sans rétrécissement) des muscles ---
+// Les muscles féminins paraissent moins « sculptés » (striations, tablette d'abdos). Les sommets en double
+// (coutures) sont soudés par position pour ne pas déchirer le maillage ; les bords ouverts ne bougent pas.
+{
+  const PASSES = 3, LAMBDA = 0.45, MU = -0.47;
+  let lisses = 0;
+  for (const n of nodes) {
+    if (n.getName() === 'silhouette') continue;
+    for (const p of n.getMesh().listPrimitives()) {
+      const a = p.getAttribute('POSITION'), idx = p.getIndices().getArray(), nb = a.getCount();
+      const P = Array.from({ length: nb }, (_, i) => a.getElement(i, [0, 0, 0]));
+      const ids = new Map(), soude = new Int32Array(nb);
+      P.forEach((q, i) => { const c = q.map((x) => Math.round(x * 1e5)).join(','); if (!ids.has(c)) ids.set(c, ids.size); soude[i] = ids.get(c); });
+      const m = ids.size, voisins = Array.from({ length: m }, () => new Set()), aretes = new Map();
+      for (let f = 0; f < idx.length; f += 3) for (let e = 0; e < 3; e++) {
+        const u = soude[idx[f + e]], v = soude[idx[f + (e + 1) % 3]]; if (u === v) continue;
+        voisins[u].add(v); voisins[v].add(u);
+        const c = u < v ? u + ',' + v : v + ',' + u; aretes.set(c, (aretes.get(c) || 0) + 1);
+      }
+      const bord = new Uint8Array(m);
+      for (const [c, nbf] of aretes) if (nbf === 1) { const [u, v] = c.split(',').map(Number); bord[u] = bord[v] = 1; }
+      let Q = new Array(m); P.forEach((q, i) => (Q[soude[i]] = q.slice()));
+      const passe = (f) => {
+        Q = Q.map((q, u) => {
+          if (bord[u] || !voisins[u].size) return q;
+          const c = [0, 0, 0]; for (const v of voisins[u]) for (let j = 0; j < 3; j++) c[j] += Q[v][j];
+          return q.map((x, j) => x + f * (c[j] / voisins[u].size - x));
+        });
+      };
+      for (let k = 0; k < PASSES; k++) { passe(LAMBDA); passe(MU); }
+      for (let i = 0; i < nb; i++) a.setElement(i, Q[soude[i]]);
+      lisses += m;
+    }
+  }
+  console.log('sommets lissés :', lisses);
 }
 
 // --- Grille de recherche du point de muscle le plus proche (pour savoir si un point de peau est « bras » ou « tronc ») ---
@@ -199,7 +272,10 @@ for (const n of nodes) {
         poidsBras = dB === Infinity ? 0 : dT === Infinity ? 1 : lisse(-0.012, 0.012, dT - dB);
       }
       let r = poidsBras === 0 ? tronc(q) : poidsBras === 1 ? bras(q) : melange(tronc(q), bras(q), poidsBras);
-      if (nom === 'silhouette' && N) r = poitrine(r, N.getElement(i, nv)[2] * (1 - poidsBras));
+      if (nom === 'silhouette' && N) {
+        const nn = N.getElement(i, nv), e = courbe(GRAISSE, q[1]) * (1 - poidsBras);
+        r = poitrine([r[0] + nn[0] * e, r[1] + nn[1] * e, r[2] + nn[2] * e], nn[2] * (1 - poidsBras));
+      }
       r = r.map((c) => c * ECHELLE);
       a.setElement(i, l(r));
     }
