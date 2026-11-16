@@ -10,6 +10,7 @@
 //   - tronc : épaules et taille plus étroites, bassin plus large, fessiers plus ronds, cou plus fin ;
 //   - jambes : cuisses qui convergent vers les genoux (angle Q plus marqué), genoux plus fins ;
 //   - bras : translatés avec l'épaule, légèrement écartés (les mains passent au-dessus des hanches), un peu plus fins ;
+//   - glande mammaire : nouvel objet « glande_mammaire » qui remplit l'espace entre le pectoral et la peau de la poitrine ;
 //   - peau (silhouette) uniquement : poitrine en goutte (pente douce au-dessus, plus pleine en bas, pli sous-mammaire).
 //   - taille générale ×0,96 (pieds toujours à y = 0).
 // Repère : y vers le haut (pieds à 0, ~1,75 m), le corps regarde vers +Z, gauche du corps en +X.
@@ -81,7 +82,7 @@ function poitrine([x, y, z], nz) {
     d += Math.exp(-r2 / 2);
   }
   d = Math.min(1, d) * Math.min(1, nz * 1.4);
-  return [x + Math.sign(x) * 0.01 * d, y - 0.008 * d, z + 0.05 * d];
+  return [x + Math.sign(x) * 0.012 * d, y - 0.01 * d, z + 0.062 * d];
 }
 
 // --- Déquantification : positions et normales en flottants, transformation du nœud appliquée aux sommets
@@ -280,6 +281,80 @@ for (const n of nodes) {
       a.setElement(i, l(r));
     }
   }
+}
+
+// --- Glande mammaire (nouvel objet « glande_mammaire », non cliquable dans l'app) ---
+// Remplit l'espace entre la face avant des muscles (pectoral) et la peau de la poitrine, 3 mm sous la peau,
+// comme sur les planches anatomiques féminines (masse adipeuse et glandulaire posée sur le bas du grand pectoral).
+// Construite sur une grille (x, y) : profondeur des muscles et de la peau mesurée par des rayons tirés de face.
+{
+  const PAS = 0.004, CENTRE_Y = 1.232 * ECHELLE, CX = 0.098 * ECHELLE, RX = 0.088, RY_HAUT = 0.10, RY_BAS = 0.065;
+  /** Surface la plus en avant (z max) d'un ensemble de maillages, en (x, y) : triangles rangés par cases 2D. */
+  function surfaceAvant(noms) {
+    const C = 0.01, cases = new Map();
+    for (const n of nodes) {
+      if (!noms(n.getName())) continue;
+      for (const p of n.getMesh().listPrimitives()) {
+        const a = p.getAttribute('POSITION'), idx = p.getIndices().getArray(), v = [0, 0, 0];
+        const P = Array.from({ length: a.getCount() }, (_, i) => a.getElement(i, v).slice());
+        for (let f = 0; f < idx.length; f += 3) {
+          const t = [P[idx[f]], P[idx[f + 1]], P[idx[f + 2]]];
+          if (Math.min(t[0][1], t[1][1], t[2][1]) > CENTRE_Y + 0.2 || Math.max(t[0][1], t[1][1], t[2][1]) < CENTRE_Y - 0.2) continue;
+          const x0 = Math.floor(Math.min(t[0][0], t[1][0], t[2][0]) / C), x1 = Math.floor(Math.max(t[0][0], t[1][0], t[2][0]) / C);
+          const y0 = Math.floor(Math.min(t[0][1], t[1][1], t[2][1]) / C), y1 = Math.floor(Math.max(t[0][1], t[1][1], t[2][1]) / C);
+          for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) { const k = x + ',' + y; if (!cases.has(k)) cases.set(k, []); cases.get(k).push(t); }
+        }
+      }
+    }
+    return (x, y) => {
+      let zm = -Infinity;
+      for (const [A, B, D] of cases.get(Math.floor(x / C) + ',' + Math.floor(y / C)) || []) {
+        const det = (B[1] - D[1]) * (A[0] - D[0]) + (D[0] - B[0]) * (A[1] - D[1]); if (Math.abs(det) < 1e-14) continue;
+        const l1 = ((B[1] - D[1]) * (x - D[0]) + (D[0] - B[0]) * (y - D[1])) / det;
+        const l2 = ((D[1] - A[1]) * (x - D[0]) + (A[0] - D[0]) * (y - D[1])) / det, l3 = 1 - l1 - l2;
+        if (l1 < 0 || l2 < 0 || l3 < 0) continue;
+        zm = Math.max(zm, l1 * A[2] + l2 * B[2] + l3 * D[2]);
+      }
+      return zm;
+    };
+  }
+  const muscles = surfaceAvant((n) => n !== 'silhouette');
+  const peau = surfaceAvant((n) => n === 'silhouette');
+  const pos = [], ind = [];
+  for (const s of [-1, 1]) {
+    const cx = s * CX, nx = Math.ceil(RX / PAS), ny0 = Math.ceil(RY_BAS / PAS), ny1 = Math.ceil(RY_HAUT / PAS);
+    const W = 2 * nx + 1, base = pos.length / 3, nb = W * (ny0 + ny1 + 1);
+    const avant = [], arriere = [];
+    for (let j = -ny0; j <= ny1; j++) for (let i = -nx; i <= nx; i++) {
+      const x = cx + i * PAS, y = CENTRE_Y + j * PAS;
+      // ellipse décalée vers l'aisselle en haut (prolongement axillaire)
+      const ex = (x - cx - s * Math.max(0, j * PAS) * 0.35) / RX, ey = (j * PAS) / (j > 0 ? RY_HAUT : RY_BAS);
+      const r = Math.hypot(ex, ey), bord = 1 - lisse(0.7, 1.0, r);
+      const zm = muscles(x, y), zp = peau(x, y);
+      const ok = isFinite(zm) && isFinite(zp);
+      const ep = ok ? Math.max(0, zp - 0.003 - zm) * bord : 0;
+      const zArr = ok ? zm - 0.001 : 0;
+      arriere.push([x, y, zArr]); avant.push([x, y, zArr + ep]);
+    }
+    for (const q of avant) pos.push(...q);
+    for (const q of arriere) pos.push(...q);
+    const visible = (k) => avant[k][2] - arriere[k][2] > 0.0005;
+    for (let j = 0; j < ny0 + ny1; j++) for (let i = 0; i < W - 1; i++) {
+      const a = j * W + i, b = a + 1, c = a + W, d = c + 1;
+      if (![a, b, c, d].some(visible) || [a, b, c, d].some((k) => !isFinite(arriere[k][2]) || arriere[k][2] === 0)) continue;
+      ind.push(base + a, base + b, base + d, base + a, base + d, base + c); // face avant (vers +z)
+      ind.push(base + nb + a, base + nb + d, base + nb + b, base + nb + a, base + nb + c, base + nb + d); // face arrière
+    }
+  }
+  const buf = doc.getRoot().listBuffers()[0];
+  const prim = doc.createPrimitive()
+    .setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(pos)).setBuffer(buf))
+    .setAttribute('NORMAL', doc.createAccessor().setType('VEC3').setArray(new Float32Array(pos.length)).setBuffer(buf))
+    .setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(ind)).setBuffer(buf));
+  const noeud = doc.createNode('glande_mammaire').setMesh(doc.createMesh('glande_mammaire').addPrimitive(prim));
+  doc.getRoot().listScenes()[0].addChild(noeud);
+  nodes.push(noeud);
+  console.log('glande mammaire :', ind.length / 3, 'triangles');
 }
 
 // Normales recalculées (moyenne des faces) pour un éclairage correct après déformation

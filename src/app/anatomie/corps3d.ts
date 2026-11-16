@@ -212,6 +212,12 @@ export class Corps3d implements AfterViewInit, OnChanges, OnDestroy {
         this.silhouette = mesh;
         return;
       }
+      if (o.name === 'glande_mammaire') {
+        // modèle féminin : glande mammaire en jaune translucide, posée sur le pectoral qui reste visible dessous
+        mesh.material = new T.MeshStandardMaterial({ color: 0xe9c46a, roughness: 0.8, transparent: true, opacity: 0.42, depthWrite: false });
+        mesh.renderOrder = 1;
+        return;
+      }
       mesh.material = new T.MeshStandardMaterial({ roughness: 0.62, metalness: 0 });
       if (o.name === 'contexte') { this.contexte = mesh; this.cliquables.push(mesh); return; }
       const code = objetVersCode.get(o.name) || o.name.replace(/_[gd]$/, '');

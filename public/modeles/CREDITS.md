@@ -11,7 +11,7 @@ Sources :
 Modifications apportées par Coach John :
 - conservation du seul système musculaire et des régions de la peau (contour du corps) ;
 - retrait des fascias, bourses, gaines, ligaments et muscles internes (œil, larynx, main, pied...) ;
-- `corps-femme.glb` : variante féminine obtenue en déformant `corps.glb` (muscles du haut du corps affinés, proportions du tronc, du bassin, des jambes et des bras, poitrine) ;
+- `corps-femme.glb` : variante féminine obtenue en déformant `corps.glb` (muscles du haut du corps affinés, proportions du tronc, du bassin, des jambes et des bras, poitrine et glande mammaire) ;
 - regroupement des muscles en 23 zones (`grand_fessier_g`, `grand_fessier_d`...), simplification et compression meshopt.
 
 Seul ce modèle est sous CC BY-SA : le code de l'application n'est pas concerné.
