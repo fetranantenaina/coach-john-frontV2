@@ -3,9 +3,12 @@
 //
 // Construit la variante féminine du corps à partir de corps.glb, en déformant tous les maillages
 // avec le même champ (les muscles restent donc sous la peau et gardent leurs noms / codes) :
+//   - muscles du haut du corps moins épais (pectoraux, épaules, bras, trapèzes, dorsaux) : seule la face
+//     extérieure rentre, d'une fraction de l'épaisseur locale du muscle (il reste collé au corps) ;
 //   - tronc : épaules et taille plus étroites, bassin plus large, fessiers plus ronds, cou plus fin ;
+//   - jambes : cuisses qui convergent vers les genoux (angle Q plus marqué), genoux plus fins ;
 //   - bras : translatés avec l'épaule, légèrement écartés (les mains passent au-dessus des hanches), un peu plus fins ;
-//   - peau (silhouette) uniquement : poitrine.
+//   - peau (silhouette) uniquement : poitrine en goutte (pente douce au-dessus, plus pleine en bas, pli sous-mammaire).
 //   - taille générale ×0,96 (pieds toujours à y = 0).
 // Repère : y vers le haut (pieds à 0, ~1,75 m), le corps regarde vers +Z, gauche du corps en +X.
 import { NodeIO } from '@gltf-transform/core';
@@ -33,7 +36,8 @@ function courbe(pts, y) {
 }
 
 // Largeur (x) du tronc et des jambes selon la hauteur
-const SX = [[0.40, 1.0], [0.70, 1.04], [0.90, 1.08], [1.00, 1.0], [1.10, 0.88], [1.22, 0.90], [1.42, 0.90], [1.50, 0.86], [1.58, 0.94], [1.70, 0.96]];
+// (sous le bassin : x resserré jusqu'aux genoux, ce qui fait converger les cuisses sans croiser les jambes)
+const SX = [[0.05, 0.97], [0.25, 0.94], [0.48, 0.91], [0.62, 0.96], [0.76, 1.03], [0.90, 1.08], [1.00, 1.0], [1.10, 0.88], [1.22, 0.90], [1.42, 0.90], [1.50, 0.86], [1.58, 0.94], [1.70, 0.96]];
 // Profondeur (z) : taille et cou affinés
 const SZ = [[0.95, 1.0], [1.08, 0.92], [1.18, 0.95], [1.30, 1.0], [1.45, 1.0], [1.52, 0.9], [1.60, 1.0]];
 // Fessiers : arrière du bassin plus rond (z < 0 seulement)
@@ -53,7 +57,7 @@ function bras([x, y, z]) {
   // axe approximatif du bras : de l'épaule au poignet (0,25 ; 0,80 ; 0)
   const t = Math.min(1, Math.max(0, (EPAULE.y - y) / 0.6));
   const cx = EPAULE.x + (0.25 - EPAULE.x) * t, cz = EPAULE.z + (0 - EPAULE.z) * t;
-  let px = cx + (ax - cx) * 0.93, pz = cz + (z - cz) * 0.93; // bras plus fin (−7 %)
+  let px = cx + (ax - cx) * 0.96, pz = cz + (z - cz) * 0.96; // bras plus fin (−4 %, en plus de l'affinage des muscles)
   px -= EPAULE.x * 0.10; // l'épaule rentre avec le tronc
   const pivotX = EPAULE.x * 0.90, dx = px - pivotX, dy = y - EPAULE.y;
   const rx = pivotX + dx * Math.cos(ANGLE) - dy * Math.sin(ANGLE);
@@ -61,16 +65,18 @@ function bras([x, y, z]) {
   return [s * rx, ry, pz];
 }
 
-// Poitrine (peau seulement) : deux bosses gaussiennes vers l'avant, posées sur le haut des pectoraux
+// Poitrine (peau seulement), en goutte : longue pente douce au-dessus, volume en bas, pli net dessous,
+// légèrement tournée vers l'extérieur. Coordonnées après la déformation du tronc.
 function poitrine([x, y, z], nz) {
   if (nz <= 0.1) return [x, y, z];
   let d = 0;
-  for (const cx of [-0.095, 0.095]) {
-    const r2 = ((x - cx) ** 2) / (0.06 ** 2) + ((y - 1.255) ** 2) / (0.055 ** 2);
+  for (const cx of [-0.098, 0.098]) {
+    const dy = y - 1.232, sy = dy > 0 ? 0.075 : 0.036;
+    const r2 = ((x - cx) ** 2) / (0.056 ** 2) + (dy * dy) / (sy * sy);
     d += Math.exp(-r2 / 2);
   }
-  d = Math.min(1, d) * nz;
-  return [x + Math.sign(x) * 0.008 * d, y - 0.012 * d, z + 0.045 * d];
+  d = Math.min(1, d) * Math.min(1, nz * 1.4);
+  return [x + Math.sign(x) * 0.01 * d, y - 0.008 * d, z + 0.05 * d];
 }
 
 // --- Déquantification : positions et normales en flottants, transformation du nœud appliquée aux sommets
@@ -91,6 +97,60 @@ for (const n of nodes) {
     }
   }
   n.setTranslation([0, 0, 0]).setScale([1, 1, 1]);
+}
+
+// --- Muscles du haut du corps moins épais ---
+// Pour chaque sommet de la face extérieure (celle tournée vers la peau), on mesure l'épaisseur du muscle
+// par un rayon lancé vers l'intérieur, puis on recule le sommet d'une fraction de cette épaisseur (8 mm max).
+const AFFINER = {
+  grand_pectoral: 0.32, pectoral_claviculaire: 0.32, deltoide_anterieur: 0.28, deltoide_lateral: 0.28, deltoide_posterieur: 0.28,
+  biceps: 0.28, triceps: 0.25, avant_bras: 0.15, trapeze_superieur: 0.28, trapeze_moyen: 0.2, trapeze_inferieur: 0.2, grand_dorsal: 0.2,
+};
+const OFFSET_MAX = 0.008;
+{
+  const peau = nodes.find((n) => n.getName() === 'silhouette').getMesh().listPrimitives()[0].getAttribute('POSITION');
+  const C = 0.02, g = new Map(), v = [0, 0, 0];
+  const k = (x, y, z) => `${Math.floor(x / C)},${Math.floor(y / C)},${Math.floor(z / C)}`;
+  for (let i = 0; i < peau.getCount(); i++) { const q = peau.getElement(i, [0, 0, 0]); const c = k(...q); if (!g.has(c)) g.set(c, []); g.get(c).push(q); }
+  const distPeau = (q) => {
+    let m = Infinity; const [ix, iy, iz] = q.map((c) => Math.floor(c / C));
+    for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) for (let c = -3; c <= 3; c++)
+      for (const p of g.get(`${ix + a},${iy + b},${iz + c}`) || []) m = Math.min(m, Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]));
+    return m;
+  };
+  // Möller–Trumbore : distance le long du rayon (o, d) jusqu'au triangle, ou Infinity
+  const rayon = (o, d, A, B, Cc) => {
+    const e1 = [B[0] - A[0], B[1] - A[1], B[2] - A[2]], e2 = [Cc[0] - A[0], Cc[1] - A[1], Cc[2] - A[2]];
+    const p = [d[1] * e2[2] - d[2] * e2[1], d[2] * e2[0] - d[0] * e2[2], d[0] * e2[1] - d[1] * e2[0]];
+    const det = e1[0] * p[0] + e1[1] * p[1] + e1[2] * p[2]; if (Math.abs(det) < 1e-12) return Infinity;
+    const inv = 1 / det, s = [o[0] - A[0], o[1] - A[1], o[2] - A[2]];
+    const u = (s[0] * p[0] + s[1] * p[1] + s[2] * p[2]) * inv; if (u < 0 || u > 1) return Infinity;
+    const q = [s[1] * e1[2] - s[2] * e1[1], s[2] * e1[0] - s[0] * e1[2], s[0] * e1[1] - s[1] * e1[0]];
+    const w = (d[0] * q[0] + d[1] * q[1] + d[2] * q[2]) * inv; if (w < 0 || u + w > 1) return Infinity;
+    const t = (e2[0] * q[0] + e2[1] * q[1] + e2[2] * q[2]) * inv; return t > 1e-4 ? t : Infinity;
+  };
+  let bouges = 0;
+  for (const n of nodes) {
+    const frac = AFFINER[n.getName().replace(/_[gd]$/, '')]; if (!frac) continue;
+    for (const p of n.getMesh().listPrimitives()) {
+      const a = p.getAttribute('POSITION'), N = p.getAttribute('NORMAL'), idx = p.getIndices().getArray();
+      const P = Array.from({ length: a.getCount() }, (_, i) => a.getElement(i, [0, 0, 0]));
+      const T = []; for (let f = 0; f < idx.length; f += 3) T.push([P[idx[f]], P[idx[f + 1]], P[idx[f + 2]], idx[f], idx[f + 1], idx[f + 2]]);
+      const dep = P.map((q, i) => {
+        const nn = N.getElement(i, [0, 0, 0]);
+        const dehors = distPeau([q[0] + nn[0] * 0.004, q[1] + nn[1] * 0.004, q[2] + nn[2] * 0.004]);
+        const dedans = distPeau([q[0] - nn[0] * 0.004, q[1] - nn[1] * 0.004, q[2] - nn[2] * 0.004]);
+        if (!(dehors < dedans)) return null; // face profonde (contre les os) : ne bouge pas
+        const d = [-nn[0], -nn[1], -nn[2]]; let t = Infinity;
+        for (const tr of T) if (tr[3] !== i && tr[4] !== i && tr[5] !== i) t = Math.min(t, rayon(q, d, tr[0], tr[1], tr[2]));
+        if (!isFinite(t) || t > 0.08) return null;
+        const o = Math.min(frac * t, OFFSET_MAX);
+        return [q[0] + d[0] * o, q[1] + d[1] * o, q[2] + d[2] * o];
+      });
+      dep.forEach((q, i) => { if (q) { a.setElement(i, q); bouges++; } });
+    }
+  }
+  console.log('sommets de muscles affinés :', bouges);
 }
 
 // --- Grille de recherche du point de muscle le plus proche (pour savoir si un point de peau est « bras » ou « tronc ») ---
