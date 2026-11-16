@@ -16,7 +16,7 @@ export class Profil {
     if (!h || !h.dates || !h.dates.length) { this.groupes = []; return; }
     const num = (a: any[]) => (a || []).map((v) => (v === null || v === undefined || v === '' ? null : Number(v)));
     const S = (nom: string, cle: string, couleur: string) => ({ nom, valeurs: num(h[cle]), couleur });
-    const P = ['#cdaf6c', '#7f9a3e', '#4f8fb0', '#c4663f', '#9a74c0'];
+    const P = ['#cdaf6c', '#8a8f93', '#4f8fb0', '#c4663f', '#9a74c0'];
     const defs = [
       { id: 'poids', titre: 'Poids', unite: 'kg', series: [S('Poids', 'poids_kg', P[0])] },
       { id: 'imc', titre: 'IMC', unite: '', series: [S('IMC', 'imc', P[1])] },

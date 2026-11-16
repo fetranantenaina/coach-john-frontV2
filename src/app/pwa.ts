@@ -23,6 +23,6 @@ export class Pwa {
   basculer() { this.theme = this.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('theme', this.theme); this.appliquer(); }
   private appliquer() {
     document.documentElement.dataset['theme'] = this.theme;
-    document.querySelector('meta[name=theme-color]')?.setAttribute('content', this.theme === 'dark' ? '#0b0b09' : '#ffffff');
+    document.querySelector('meta[name=theme-color]')?.setAttribute('content', '#383e42');
   }
 }

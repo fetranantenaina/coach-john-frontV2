@@ -1,7 +1,7 @@
 // Service worker Coach John : l'app reste ouvrable hors-ligne (coquille + derniers fichiers vus).
 // Réseau d'abord (jamais de version périmée), cache en secours. L'API et le WebSocket ne sont jamais mis en cache.
-const C = 'coach-john-v2';
-const PRE = ['/', '/manifest.json', '/logo.png', '/icon-192.png', '/icon-512.png'];
+const C = 'coach-john-v3';
+const PRE = ['/', '/manifest.json', '/logo.png', '/polices/six-caps.woff2', '/icon-192.png', '/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(PRE))); self.skipWaiting(); });
 self.addEventListener('activate', e => e.waitUntil(
   caches.keys().then(k => Promise.all(k.filter(x => x !== C).map(x => caches.delete(x)))).then(() => self.clients.claim())));

@@ -1,8 +1,25 @@
 <main>
   <input placeholder="Rechercher un client…" [(ngModel)]="q" style="margin-bottom:12px">
+  @if (info) { <div class="alerte" style="margin:0 0 12px">Identifiants à transmettre au client — identifiant : <b>{{ info.name }}</b> · mot de passe : <b>{{ info.mdp }}</b> <button class="lien" (click)="info = null">masquer</button></div> }
   @for (u of filtres(); track u.id) {
-    <div class="row"><span style="display:flex;gap:10px;align-items:center"><span class="avatar">{{ u.name[0] }}</span><span><b>{{ u.name }}</b><br><span class="muted">{{ u.email }}</span></span></span>
-      <button class="sec" (click)="gerer(u)">Gérer</button></div>
+    <div class="row" style="flex-wrap:wrap"><span style="display:flex;gap:10px;align-items:center"><span class="avatar">{{ u.name[0] }}</span><span><b>{{ u.name }}</b><br><span class="muted">{{ u.email }}</span></span></span>
+      <span style="display:flex;gap:6px"><button class="sec" (click)="ouvrir(u)">{{ edition?.id === u.id ? 'Fermer' : 'Compte' }}</button><button class="sec" (click)="gerer(u)">Gérer</button></span>
+      @if (edition?.id === u.id) {
+        <div style="flex-basis:100%">
+          <p class="muted" style="margin:8px 0 0">Identifiant de connexion : <b>{{ u.name }}</b> · créé le {{ u.created_at | date:'dd/MM/yyyy' }}. Les mots de passe sont chiffrés : on ne peut pas les relire, seulement en définir un nouveau.</p>
+          <div class="grid">
+            <div><label>Identifiant</label><input [(ngModel)]="edition.name" autocomplete="off"></div>
+            <div><label>Email</label><input type="email" [(ngModel)]="edition.email" autocomplete="off"></div>
+            <div><label>Nouveau mot de passe</label><input [type]="voirMdp ? 'text' : 'password'" [(ngModel)]="edition.mdp" placeholder="(inchangé)" autocomplete="new-password"></div>
+          </div>
+          <span style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button (click)="enregistrer()">Enregistrer</button>
+            <button class="sec" style="margin-top:10px" (click)="generer()">Générer un mot de passe</button>
+            <button class="lien" style="margin-top:10px" (click)="voirMdp = !voirMdp">{{ voirMdp ? 'Masquer' : 'Afficher' }}</button>
+          </span>
+        </div>
+      }
+    </div>
   } @empty { @if (api.pending > 0) { <div class="spin-ligne"><i class="spinner"></i>Chargement…</div> } @else { <p class="muted">Aucun client trouvé.</p> } }
   <details class="card" style="margin-top:14px" [open]="!list.length"><summary>Créer un compte client</summary>
     <div class="grid"><div><label>Nom d'utilisateur</label><input [(ngModel)]="f.name"></div><div><label>Email</label><input type="email" [(ngModel)]="f.email"></div><div><label>Mot de passe</label><input type="password" [(ngModel)]="f.mdp"></div></div>

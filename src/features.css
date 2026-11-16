@@ -60,3 +60,8 @@
 @media (max-width:480px){.c3d-vues .chip{font-size:.72rem;padding:3px 8px}}
 .bouton-lien{display:inline-block;margin:0 0 8px;color:var(--sable);font-weight:600;text-decoration:none}
 a.chip{color:inherit;text-decoration:none}
+
+/* En-tête gris anthracite : logo sur fond transparent, contrôles en clair */
+header .hicon,header .hicon.on{color:var(--clair)}
+header button.sec{border-color:color-mix(in srgb,var(--clair) 55%,transparent);color:var(--clair)}
+header button.sec:hover{background:color-mix(in srgb,var(--clair) 12%,transparent)}
