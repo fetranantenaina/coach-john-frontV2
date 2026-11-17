@@ -72,3 +72,21 @@ header button.sec:hover{background:var(--item)}
 .zone-danger .muted{flex:1 1 220px;font-size:.8rem}
 button.danger{background:transparent;border:1px solid var(--rouge);color:var(--rouge);margin:0}
 button.danger:hover{background:var(--rouge);color:#fff}
+
+/* Maquette 2026-11-17 : en-tête marron (logo sans fond, le marron apparaît derrière) */
+header{background:var(--or);color:#14140f;border-bottom-color:color-mix(in srgb,#000 12%,var(--or))}
+header .logo{color:#14140f}
+header .hicon,header .hicon.on{color:#14140f}
+header button.sec{border-color:rgba(20,20,15,.45);color:#14140f;background:transparent}
+header button.sec:hover{background:rgba(20,20,15,.1)}
+header .sec .ic,header app-outils button{color:#14140f}
+
+/* Maquette 2026-11-17 : puces groupes/méthodes et bouton « Ajouter au référentiel » en gris */
+:root{--gris-pill:#c4c4c6;--gris-pill-on:#9d9da1;--gris-pill-txt:#14140f}
+.chips.gris .chip{background:var(--gris-pill);border-color:var(--gris-pill);color:var(--gris-pill-txt);padding:9px 18px;font-size:.82rem;letter-spacing:.03em}
+.chips.gris .chip small{color:var(--gris-pill-txt);opacity:.65}
+.chips.gris .chip:hover{border-color:var(--gris-pill-on)}
+.chips.gris .chip.on{background:var(--gris-pill-on);border-color:#5f5f63;box-shadow:inset 0 0 0 1px #5f5f63;color:var(--gris-pill-txt)}
+button.gris{background:var(--gris-pill);color:var(--gris-pill-txt);border-radius:999px;padding:12px 28px;font-weight:500}
+button.gris:hover{background:var(--gris-pill-on)}
+button.gris:disabled{opacity:.55;cursor:not-allowed}

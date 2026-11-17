@@ -18,10 +18,10 @@
         @if (!vue().n) { <span class="muted">Aucun exercice ne correspond : tu peux le créer.</span> }
       </div>
       <p class="facette-titre">Groupes musculaires</p>
-      <div class="chips">@for (g of vue().groupes; track g[0]) { <span class="chip" role="button" tabindex="0" [class.on]="norm(nx.groupe_musculaire) === norm(g[0])" (click)="choisirGroupe(g[0])" (keyup.enter)="choisirGroupe(g[0])">{{ g[0] }} <small>{{ g[1] }}</small></span> }</div>
+      <div class="chips gris">@for (g of vue().groupes; track g[0]) { <span class="chip" role="button" tabindex="0" [class.on]="norm(nx.groupe_musculaire) === norm(g[0])" (click)="choisirGroupe(g[0])" (keyup.enter)="choisirGroupe(g[0])">{{ g[0] }} <small>{{ g[1] }}</small></span> }</div>
       <p class="facette-titre">Méthodes</p>
-      <div class="chips">@for (m of vue().methodes; track m[0]) { <span class="chip" role="button" tabindex="0" [class.on]="norm(nx.methode) === norm(m[0])" (click)="choisirMethode(m[0])" (keyup.enter)="choisirMethode(m[0])">{{ m[0] }} <small>{{ m[1] }}</small></span> }</div>
-      <button (click)="creerExo()" [disabled]="!nx.nom || !!vue().existant">Ajouter au référentiel</button></details>
+      <div class="chips gris">@for (m of vue().methodes; track m[0]) { <span class="chip" role="button" tabindex="0" [class.on]="norm(nx.methode) === norm(m[0])" (click)="choisirMethode(m[0])" (keyup.enter)="choisirMethode(m[0])">{{ m[0] }} <small>{{ m[1] }}</small></span> }</div>
+      <button class="gris" (click)="creerExo()" [disabled]="!nx.nom || !!vue().existant">Ajouter au référentiel</button></details>
     <details class="card"><summary>Nouvelle séance</summary>
       <div class="grid"><div><label>Session</label><input [(ngModel)]="ns.nom_session"></div><div><label>Cible</label><input [(ngModel)]="ns.cible"></div><div><label>Date</label><input type="date" [(ngModel)]="ns.date_seance"></div></div>
       <label>Notes</label><input [(ngModel)]="ns.notes"><button (click)="creer()">Créer</button></details> }
