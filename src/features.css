@@ -66,3 +66,9 @@ header .hicon{color:var(--kaki-cl)}header .hicon.on{color:var(--sable)}
 header button.sec{border-color:var(--bord);color:var(--blanc)}
 header button.sec:hover{background:var(--item)}
 .card h3{color:var(--titre)}
+
+/* Admin : suppression de compte */
+.zone-danger{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px dashed var(--bord)}
+.zone-danger .muted{flex:1 1 220px;font-size:.8rem}
+button.danger{background:transparent;border:1px solid var(--rouge);color:var(--rouge);margin:0}
+button.danger:hover{background:var(--rouge);color:#fff}

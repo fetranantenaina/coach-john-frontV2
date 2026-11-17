@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Api } from '../../api';
 
-/** Admin : recherche des clients, création de comptes, récupération d'un compte (identifiant, email, mot de passe), choix du client à gérer. */
+/** Admin : recherche des clients, création de comptes, récupération d'un compte (identifiant, email, mot de passe), suppression, choix du client à gérer. */
 @Component({ selector: 'app-clients', standalone: true, imports: [FormsModule, DatePipe], templateUrl: './clients.html' })
 export class Clients {
   list: any[] = []; f: any = {}; q = '';
@@ -31,6 +31,21 @@ export class Clients {
       await this.api.put('/utilisateur/' + e.id, this.api.clean({ name: e.name.trim(), email: e.email.trim(), mdp: e.mdp }));
       this.api.toast('Compte mis à jour');
       if (e.mdp) this.info = { name: e.name.trim(), mdp: e.mdp };
+      this.edition = null; this.load(); this.api.loadClients();
+    } catch (err: any) { this.api.toast(err.message); }
+  }
+  /** Suppression définitive (double confirmation : il faut retaper l'identifiant). */
+  async supprimer(u: any) {
+    const saisi = prompt(`Supprimer définitivement le compte « ${u.name} » et toutes ses données ?
+Cette action est irréversible.
+
+Tape l'identifiant du client pour confirmer :`);
+    if (saisi === null) return;
+    if (saisi.trim() !== u.name) { this.api.toast('Identifiant incorrect : suppression annulée'); return; }
+    try {
+      await this.api.del('/utilisateur/' + u.id);
+      if (this.api.cible?.id === u.id) this.api.setCible(null);
+      this.api.toast('Compte supprimé');
       this.edition = null; this.load(); this.api.loadClients();
     } catch (err: any) { this.api.toast(err.message); }
   }

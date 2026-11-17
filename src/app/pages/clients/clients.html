@@ -17,6 +17,10 @@
             <button class="sec" style="margin-top:10px" (click)="generer()">Générer un mot de passe</button>
             <button class="lien" style="margin-top:10px" (click)="voirMdp = !voirMdp">{{ voirMdp ? 'Masquer' : 'Afficher' }}</button>
           </span>
+          <div class="zone-danger">
+            <span class="muted">Supprimer définitivement ce compte et toutes ses données (profil, relevés, séances, nutrition, messages).</span>
+            <button class="danger" (click)="supprimer(u)">Supprimer le compte</button>
+          </div>
         </div>
       }
     </div>
