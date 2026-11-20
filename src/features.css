@@ -90,3 +90,14 @@ header .sec .ic,header app-outils button{color:#14140f}
 button.gris{background:var(--gris-pill);color:var(--gris-pill-txt);border-radius:999px;padding:12px 28px;font-weight:500}
 button.gris:hover{background:var(--gris-pill-on)}
 button.gris:disabled{opacity:.55;cursor:not-allowed}
+
+/* 2026-11-20 : boutons pleins et pastilles en gris clair (mode sombre et clair), sauf l'écran de connexion */
+:root{--gris-clair:#c4c4c6;--gris-clair-on:#9d9da1;--gris-clair-txt:#14140f}
+button:not(.sec):not(.lien):not(.danger):not(.gris),.pill,.chip.on,.cal-jour.sel,.mini-date,.msg.moi{background:var(--gris-clair);color:var(--gris-clair-txt)}
+button:not(.sec):not(.lien):not(.danger):not(.gris):hover{background:var(--gris-clair-on)}
+.chip.on{border-color:var(--gris-clair-on)}
+.chip.on small{color:inherit}
+.bars i{background:linear-gradient(var(--gris-clair-on),var(--gris-clair))}
+/* Connexion : inchangée */
+.auth button:not(.sec):not(.lien){background:var(--olive);color:var(--clair)}
+.auth button:not(.sec):not(.lien):hover{background:var(--kaki)}
